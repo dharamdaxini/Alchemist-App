@@ -104,7 +104,7 @@
 
 <div id="portal">
     <div class="brand">VIA.STACK</div>
-    <div class="sub-brand">STUDENT TERMINAL v131.45</div>
+    <div class="sub-brand">STUDENT TERMINAL</div>
     <div class="search-container"><input type="text" id="search-box" placeholder="SEARCH TOPICS..." onkeyup="filterLibrary()"></div>
     <div id="library" class="grid"></div>
 </div>
@@ -124,12 +124,25 @@
 <div id="stack"></div>
 
 <script>
+    // --- TELEMETRY ENGINE (CONNECTED) ---
+    const TELEMETRY_URL = "https://script.google.com/macros/s/AKfycbzw-sTiiKTYqtnXJusEmxpx2Wv-8UG2VPdY29WOTSLwUold9LuTpBOv80aVmUAGDlIa6w/exec";
+    const USER_ID = "STUDENT_" + Math.random().toString(36).substr(2, 9).toUpperCase();
+
     let db, VAULT = [], POOL = [], SCORE = 0, INDEX = 1, CURR_SET = "";
     
     // DB INIT
     const request = indexedDB.open("AlchemistDB", 1);
     request.onupgradeneeded = e => { e.target.result.createObjectStore("Vaults"); };
     request.onsuccess = e => { db = e.target.result; loadLibrary(); };
+
+    function logEvent(action, payload) {
+        if (!TELEMETRY_URL) return;
+        fetch(TELEMETRY_URL, {
+            method: "POST", mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ uid: USER_ID, action: action, payload: payload, ua: navigator.userAgent })
+        }).catch(err => console.log("Log failed"));
+    }
 
     // --- LIBRARY OPS ---
     function loadLibrary() {
@@ -169,7 +182,9 @@
             document.getElementById('terminal-feed').style.display = 'flex';
             CURR_SET = name;
             POOL = VAULT.sort(() => 0.5 - Math.random()).slice(0, 20);
-            SCORE = 0; INDEX = 1; renderCard();
+            SCORE = 0; INDEX = 1; 
+            logEvent("SESSION_START", `Vault: ${name}`);
+            renderCard();
         };
     }
 
@@ -224,7 +239,15 @@
             if(Math.sqrt(x*x+y*y) > 25) {
                 let dir = Math.abs(y) > Math.abs(x) ? (y < 0 ? "UP" : "DOWN") : (x > 0 ? "RIGHT" : "LEFT");
                 if(dir === "DOWN") { showOverlay(data); el.style.transform="none"; }
-                else { if(dir === data.ans.toUpperCase()) SCORE += 10; POOL.shift(); INDEX++; renderCard(); }
+                else { 
+                    if(dir === data.ans.toUpperCase()) { 
+                        SCORE += 10; 
+                        logEvent("CORRECT", `QID:${data.id}`); 
+                    } else {
+                        logEvent("WRONG", `QID:${data.id}|Ans:${dir}`);
+                    }
+                    POOL.shift(); INDEX++; renderCard(); 
+                }
             } else { el.style.transition="0.3s"; el.style.transform="none"; }
         };
         window.ontouchend = end; window.onmouseup = end;
@@ -232,6 +255,7 @@
 
     // --- OVERLAY & TEXT ENGINE ---
     function showOverlay(d) {
+        logEvent("DEEP_DIVE", `QID:${d.id}`);
         let content = `<strong>Theoretical Logic</strong>${fmt(d.expl)}<br>`;
         if (d.step_1 && d.step_1 !== "---") content += `<strong>Step 1</strong>${fmt(d.step_1)}<br>`;
         if (d.step_2 && d.step_2 !== "---") content += `<strong>Step 2</strong>${fmt(d.step_2)}<br>`;
@@ -241,31 +265,25 @@
     }
 
     function closeOverlay() { document.getElementById('overlay').style.display = 'none'; }
-    function endSession() { location.reload(); }
+    function endSession() { 
+        logEvent("SESSION_END", `Score:${SCORE}`);
+        location.reload(); 
+    }
 
-    // v131.44 SCIENTIFIC TEXT ENGINE (Gold Master)
+    // v131.44 SCIENTIFIC TEXT ENGINE (Fixes H_2O, Br_2, ^+)
     function fmt(t) { 
         if (!t || t === "---") return "";
         return t.toString()
-            // 1. Greek Symbols
             .replace(/\\alpha/g, '&alpha;')
             .replace(/\\beta/g, '&beta;')
             .replace(/\\gamma/g, '&gamma;')
             .replace(/\\Delta/g, '&Delta;')
             .replace(/\\to/g, '&rarr;')
-            
-            // 2. Superscripts (Power/Charge)
-            .replace(/\^\{([^}]+)\}/g, '<sup>$1</sup>') // Handles ^{...}
-            .replace(/\^([0-9\+\-]+)/g, '<sup>$1</sup>') // Handles ^2, ^+, ^-
-
-            // 3. Subscripts (Atoms/Indices)
-            .replace(/_\{([^}]+)\}/g, '<sub>$1</sub>') // Handles _{...}
-            .replace(/_([0-9]+)/g, '<sub>$1</sub>')     // Handles _2, _4
-            
-            // 4. Fallback for simple formulas (C6H12 -> C₆H₁₂)
+            .replace(/\^\{([^}]+)\}/g, '<sup>$1</sup>')
+            .replace(/\^([0-9\+\-]+)/g, '<sup>$1</sup>')
+            .replace(/_\{([^}]+)\}/g, '<sub>$1</sub>')
+            .replace(/_([0-9]+)/g, '<sub>$1</sub>')
             .replace(/([A-Z][a-z]?)(\d+)/g, '$1<sub>$2</sub>')
-            
-            // 5. Cleanup
             .replace(/\\/g, ''); 
     }
 
