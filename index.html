@@ -76,6 +76,8 @@
         .overlay-content { font-family: var(--font-chem); font-size: 1.1rem; color: #ddd; overflow-y: auto; flex: 1; margin-bottom: 20px; line-height: 1.6; }
         .btn-close { padding: 20px; background: var(--gold); color: #000; border: none; border-radius: 12px; font-weight: 900; font-family: var(--font-ui); text-transform: uppercase; cursor: pointer; }
         strong { color: var(--gold); font-family: var(--font-ui); font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase; display: block; margin-top: 20px; margin-bottom: 5px; }
+        
+        #empty-state { grid-column: span 2; text-align: center; color: #444; font-family: var(--font-code); font-size: 0.7rem; margin-top: 50px; line-height: 2; }
     </style>
 </head>
 <body>
@@ -124,7 +126,7 @@
 <div id="stack"></div>
 
 <script>
-    // --- TELEMETRY ENGINE (CONNECTED) ---
+    // --- TELEMETRY ENGINE ---
     const TELEMETRY_URL = "https://script.google.com/macros/s/AKfycbzw-sTiiKTYqtnXJusEmxpx2Wv-8UG2VPdY29WOTSLwUold9LuTpBOv80aVmUAGDlIa6w/exec";
     const USER_ID = "STUDENT_" + Math.random().toString(36).substr(2, 9).toUpperCase();
 
@@ -150,9 +152,11 @@
         if(!grid) return;
         grid.innerHTML = "";
         const tx = db.transaction(["Vaults"], "readonly");
+        let count = 0;
         tx.objectStore("Vaults").openCursor().onsuccess = e => {
             const cursor = e.target.result;
             if (cursor) {
+                count++;
                 const el = document.createElement('div');
                 el.className = "tile";
                 el.dataset.name = cursor.key.toLowerCase();
@@ -160,6 +164,10 @@
                 el.onclick = () => startSession(cursor.key);
                 grid.appendChild(el);
                 cursor.continue();
+            } else {
+                if(count === 0) {
+                    grid.innerHTML = `<div id="empty-state">SYSTEM OFFLINE.<br>LOAD DATA VIA [ TOOLS ]<br>OR CONTACT ADMIN.</div>`;
+                }
             }
         };
     }
@@ -270,7 +278,7 @@
         location.reload(); 
     }
 
-    // v131.44 SCIENTIFIC TEXT ENGINE (Fixes H_2O, Br_2, ^+)
+    // SCIENTIFIC TEXT ENGINE
     function fmt(t) { 
         if (!t || t === "---") return "";
         return t.toString()
