@@ -1,132 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ALCHEMIST | COMMAND CONSOLE</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
-    <style>
-        :root { --bg: #050505; --panel: #0a0a0a; --border: #1a1a1a; --gold: #ffd600; --blue: #2979FF; --green: #2ecc71; --red: #ff4444; }
-        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .header { padding: 15px 20px; border-bottom: 1px solid var(--border); background: #000; display: flex; justify-content: space-between; align-items: center; }
-        h1 { font-weight: 900; color: var(--gold); font-size: 0.9rem; letter-spacing: 2px; margin: 0; text-transform: uppercase; }
-        .workspace { flex: 1; display: grid; grid-template-columns: 300px 1fr; gap: 1px; background: var(--border); overflow: hidden; }
-        .sidebar { background: var(--panel); display: flex; flex-direction: column; border-right: 1px solid var(--border); }
-        .vault-list { flex: 1; overflow-y: auto; padding: 5px; }
-        .vault-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; margin-bottom: 4px; background: #0e0e0e; border: 1px solid var(--border); border-radius: 6px; }
-        .v-info { flex: 1; cursor: pointer; }
-        .act-btn { padding: 4px 8px; border: 1px solid #222; background: #000; color: #666; font-size: 0.6rem; font-weight: 900; cursor: pointer; margin-left: 4px; }
-        .act-btn:hover { color: var(--gold); border-color: var(--gold); }
-        textarea { flex: 1; background: #000; color: var(--green); border: none; padding: 25px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; resize: none; outline: none; }
-        .footer { background: #080808; padding: 10px; display: flex; gap: 10px; }
-        button { padding: 12px; background: #111; color: #888; border: 1px solid #333; cursor: pointer; flex: 1; font-weight: 700; font-size: 0.7rem; }
-        button:hover { color: #fff; border-color: #fff; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VIA.STACK | SESSION v131.83</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Crimson+Text:wght@600&display=swap" rel="stylesheet">
+
+<style>
+body{margin:0;background:#000;color:#fff;font-family:Inter,sans-serif}
+#top{padding:20px}
+#vault{font-size:.7rem;color:#555}
+#xp{color:#ffd600;font-weight:900}
+#stack{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+.card{width:90%;max-width:420px;height:65vh;background:#0e0e0e;
+border-radius:40px;padding:30px;font-family:Crimson Text,serif;
+font-size:1.5rem;text-align:center;display:flex;align-items:center;
+justify-content:center}
+#overlay{position:fixed;inset:0;background:#000;display:none;
+flex-direction:column;padding:30px}
+button{margin-top:auto;padding:18px;background:#ffd600;
+border:none;border-radius:14px;font-weight:900}
+</style>
 </head>
+
 <body>
-<div class="header"><h1>Alchemist Command Console</h1><a href="index.html" target="_blank" style="color:#fff; text-decoration:none; font-size:0.7rem;">STUDENT TERMINAL ↗</a></div>
-<div class="workspace">
-    <div class="sidebar">
-        <div style="padding:15px; border-bottom:1px solid #222;"><input type="text" id="v-search" placeholder="FILTER VAULTS..." onkeyup="refreshLib()" style="width:100%; background:#111; border:1px solid #333; color:#fff; padding:8px; font-size:0.7rem;"></div>
-        <div id="vault-list" class="vault-list"></div>
-    </div>
-    <div style="display:flex; flex-direction:column;">
-        <textarea id="data-input" placeholder=">> SELECT SET OR PASTE TSV DATA..."></textarea>
-        <div class="footer">
-            <button onclick="generatePDF()">PRINT PDF</button>
-            <button onclick="atomicInjection()" style="background:var(--blue); color:#fff;">INJECT DATA</button>
-        </div>
-    </div>
+
+<div id="top">
+<div id="vault"></div>
+<div id="xp">0 XP</div>
 </div>
+
+<div id="stack"></div>
+
+<div id="overlay">
+<div id="logic"></div>
+<button onclick="closeOverlay()">RESUME</button>
+</div>
+
 <script>
-    let db, currentSet = null;
-    const request = indexedDB.open("AlchemistDB", 1);
-    request.onupgradeneeded = e => e.target.result.createObjectStore("Vaults");
-    request.onsuccess = e => { db = e.target.result; refreshLib(); };
+const key=sessionStorage.getItem("ACTIVE_VAULT");
+if(!key)location.href="admin.html";
 
-    function refreshLib() {
-        const list = document.getElementById('vault-list'); list.innerHTML = "";
-        const search = document.getElementById('v-search').value.toLowerCase();
-        db.transaction(["Vaults"]).objectStore("Vaults").openCursor().onsuccess = e => {
-            const c = e.target.result;
-            if(c) {
-                if(!search || c.key.toLowerCase().includes(search)) {
-                    const div = document.createElement('div'); div.className = "vault-item";
-                    div.innerHTML = `<div class="v-info" onclick="loadSet('${c.key}')"><div style="font-size:0.75rem;">${c.key}</div><div style="font-size:0.6rem; color:#555;">${c.value.length} RECORDS</div></div>
-                    <div><button class="act-btn" onclick="renameSet('${c.key}')">R</button><button class="act-btn" onclick="deleteSet('${c.key}')">X</button></div>`;
-                    list.appendChild(div);
-                }
-                c.continue();
-            }
-        };
+let db,POOL=[],DONE=[],XP=0;
+
+indexedDB.open("AlchemistDB",1).onsuccess=e=>{
+  db=e.target.result;
+  load();
+};
+
+function load(){
+  document.getElementById("vault").innerText=key;
+  db.transaction("Vaults").objectStore("Vaults")
+  .get(key).onsuccess=e=>{
+    POOL=[...e.target.result.data].sort(()=>0.5-Math.random());
+    next();
+  };
+}
+
+function next(){
+  if(!POOL.length){
+    document.body.innerHTML="<h2 style='color:#ffd600;text-align:center;margin-top:40vh'>DONE</h2>";
+    return;
+  }
+  const q=POOL[0];
+  render(q);
+}
+
+function render(q){
+  const s=document.getElementById("stack");
+  s.innerHTML="";
+  const c=document.createElement("div");
+  c.className="card";
+  c.innerText=q.question||"—";
+  s.appendChild(c);
+
+  let sx=0,x=0,drag=false;
+
+  c.ontouchstart=e=>{drag=true;sx=e.touches[0].clientX};
+  c.ontouchmove=e=>{
+    if(!drag)return;
+    x=e.touches[0].clientX-sx;
+    c.style.transform=`translateX(${x}px) rotate(${x/25}deg)`;
+  };
+  c.ontouchend=()=>{
+    drag=false;
+    if(Math.abs(x)>120){
+      if((x>0&&q.ans==="RIGHT")||(x<0&&q.ans==="LEFT"))XP+=10;
+      DONE.push(POOL.shift());
+      document.getElementById("xp").innerText=XP+" XP";
+      next();
+    }else if(x<-40){
+      showLogic(q);
     }
+    c.style.transform="none";
+  };
+}
 
-    function loadSet(name) {
-        currentSet = name;
-        db.transaction(["Vaults"]).objectStore("Vaults").get(name).onsuccess = e => {
-            const d = e.target.result;
-            if(!d) return;
-            const headers = Object.keys(d[0]);
-            let tsv = headers.join("\t") + "\n";
-            d.forEach(row => tsv += headers.map(h => row[h] || "---").join("\t") + "\n");
-            document.getElementById('data-input').value = tsv;
-        };
-    }
-
-    function atomicInjection() {
-        const raw = document.getElementById('data-input').value.trim();
-        const lines = raw.split("\n");
-        const headers = lines[0].toLowerCase().split("\t");
-        const batches = {};
-        for(let i=1; i<lines.length; i++){
-            const cols = lines[i].split("\t");
-            let obj = {}; headers.forEach((h,idx) => obj[h] = cols[idx] || "---");
-            const sName = obj.set ? obj.set.toUpperCase() : "UNSORTED";
-            if(!batches[sName]) batches[sName] = [];
-            batches[sName].push(obj);
-        }
-        const tx = db.transaction(["Vaults"], "readwrite");
-        Object.keys(batches).forEach(k => tx.objectStore("Vaults").put(batches[k], k));
-        tx.oncomplete = () => { alert("SAVED"); refreshLib(); };
-    }
-
-    function renameSet(old) {
-        const n = prompt("New Name:", old);
-        if(!n) return;
-        const tx = db.transaction(["Vaults"], "readwrite");
-        const s = tx.objectStore("Vaults");
-        s.get(old).onsuccess = e => {
-            const data = e.target.result;
-            data.forEach(item => item.set = n.toUpperCase());
-            s.put(data, n.toUpperCase());
-            s.delete(old);
-        };
-        tx.oncomplete = () => refreshLib();
-    }
-
-    function deleteSet(n) { if(confirm("Delete " + n + "?")) { db.transaction(["Vaults"], "readwrite").objectStore("Vaults").delete(n).onsuccess = () => refreshLib(); } }
-
-    function generatePDF() {
-        const raw = document.getElementById('data-input').value;
-        const lines = raw.split("\n");
-        const headers = lines[0].toLowerCase().split("\t");
-        const data = lines.slice(1).map(l => {
-            let o = {}; l.split("\t").forEach((v, i) => o[headers[i]] = v); return o;
-        });
-        const win = window.open('', '_blank');
-        // FIX: Using correct backticks for rendering
-        let html = `<html><head><style>body{font-family:sans-serif;padding:40px;}.q{font-weight:bold;margin-top:20px;}.a{color:#666;font-style:italic;}</style></head><body>`;
-        html += `<h1>${currentSet || 'EXPORT'}</h1>`;
-        data.forEach(d => {
-            html += `<div class="q">${d.question || ''}</div>`;
-            html += `<div class="a">Ans: ${d.ans === 'UP' ? d.up : d.ans === 'RIGHT' ? d.right : d.left}</div>`;
-            html += `<div style="font-size:0.8em; margin-top:5px;">Logic: ${d.expl || ''}</div><hr>`;
-        });
-        html += `</body></html>`;
-        win.document.write(html);
-        win.document.close();
-        setTimeout(() => { win.focus(); win.print(); }, 500);
-    }
+function showLogic(q){
+  document.getElementById("logic").innerText=q.expl||"";
+  document.getElementById("overlay").style.display="flex";
+}
+function closeOverlay(){
+  document.getElementById("overlay").style.display="none";
+}
 </script>
+
 </body>
 </html>
