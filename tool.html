@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0,
+               user-scalable=no, viewport-fit=cover">
+
+<title>VIA.STACK | TOOL v131.14</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#000;
+  --panel:#0c0c0c;
+  --gold:#ffd600;
+  --blue:#2979ff;
+  --text:#eaeaea;
+  --muted:#555;
+  --border:#222;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{
+  margin:0;
+  height:100vh;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  display:flex;
+  flex-direction:column;
+}
+
+header{
+  padding:36px 30px 10px;
+}
+.brand{
+  color:var(--gold);
+  font-weight:900;
+  font-size:2.2rem;
+}
+.sub{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.7rem;
+  color:var(--muted);
+}
+
+main{
+  flex:1;
+  padding:20px 30px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+textarea{
+  flex:1;
+  background:#050505;
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:18px;
+  color:#2ecc71;
+  font-family:'JetBrains Mono',monospace;
+  font-size:.8rem;
+  resize:none;
+  outline:none;
+}
+
+.actions{
+  display:flex;
+  gap:14px;
+}
+button{
+  flex:1;
+  padding:20px;
+  border-radius:26px;
+  border:none;
+  font-weight:900;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+.btn-gold{
+  background:var(--gold);
+  color:#000;
+}
+.btn-dark{
+  background:#111;
+  color:#777;
+  border:2px solid #333;
+}
+
+footer{
+  text-align:center;
+  padding:14px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:.6rem;
+  color:#444;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="brand">Via.Stack</div>
+  <div class="sub">MASTER LABORATORY v131.14</div>
+</header>
+
+<main>
+  <textarea id="tsvInput"
+    placeholder="Paste TSV here (ID, Question, Answer, Explanation)…"></textarea>
+
+  <div class="actions">
+    <button class="btn-gold" onclick="exportPDF()">EXPORT PDF</button>
+    <button class="btn-dark" onclick="goBack()">BACK</button>
+  </div>
+</main>
+
+<footer>
+  IndexedDB · Local · Offline Ready
+</footer>
+
+<script>
+function goBack(){
+  location.href = "admin.html";
+}
+
+function exportPDF(){
+  const raw = document.getElementById("tsvInput").value.trim();
+  if(!raw){ alert("TSV is empty"); return; }
+
+  const lines = raw.replace(/\r/g,"").split("\n");
+  const html = [];
+
+  html.push("<html><head><meta charset='UTF-8'><style>");
+  html.push("body{font-family:sans-serif;padding:50px;color:#111;}");
+  html.push("h1{border-bottom:4px solid #000;padding-bottom:10px;}");
+  html.push(".card{margin-bottom:30px;page-break-inside:avoid;}");
+  html.push(".q{font-weight:bold;font-size:18px;}");
+  html.push(".a{color:#2979ff;font-weight:bold;}");
+  html.push("</style></head><body>");
+  html.push("<h1>Academic TSV Export</h1>");
+  html.push("<div style='font-size:11px;color:#666'>Generated: "+new Date().toLocaleString()+"</div>");
+
+  for(let i=1;i<lines.length;i++){
+    const c = lines[i].split("\t");
+    if(c.length<2) continue;
+
+    html.push("<div class='card'>");
+    html.push("<div class='q'>"+(c[1]||"")+"</div>");
+    html.push("<div class='a'>Answer: "+(c[2]||"")+"</div>");
+    if(c[3]) html.push("<div>"+c[3]+"</div>");
+    html.push("</div>");
+  }
+
+  html.push("</body></html>");
+
+  const blob = new Blob([html.join("")],{type:"text/html"});
+  const url = URL.createObjectURL(blob);
+  const w = window.open(url,"_blank");
+
+  if(w){
+    w.onload=()=>setTimeout(()=>{w.print();},400);
+  }else{
+    alert("Popup blocked. Allow popups.");
+  }
+}
+</script>
+
+</body>
+</html>
