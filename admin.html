@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ALCHEMIST | COMMAND CONSOLE v131.54</title>
+    <title>ALCHEMIST | COMMAND CONSOLE v131.51</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -133,7 +133,6 @@
     request.onupgradeneeded = e => { e.target.result.createObjectStore("Vaults"); };
     request.onsuccess = e => { db = e.target.result; refreshLib(); };
 
-    // --- UPGRADED REGISTRY ---
     function refreshLib() {
         const list = document.getElementById('vault-list');
         const filter = document.getElementById('vault-search').value.toLowerCase();
@@ -187,7 +186,6 @@
         };
     }
 
-    // --- FAULT-TOLERANT INJECTION ---
     async function atomicInjection() {
         const raw = document.getElementById('data-input').value.trim();
         if (!raw) return alert("WORKSPACE EMPTY");
@@ -252,7 +250,6 @@
         }
     }
 
-    // --- ACADEMIC JOURNAL PDF ENGINE (SCIENTIFIC) ---
     function generatePDF() {
         const raw = document.getElementById('data-input').value.trim();
         if(!raw) return alert("Workspace Empty");
@@ -297,7 +294,7 @@
             <body>
                 <div class="doc-header">
                     <div class="doc-title">${setID}</div>
-                    <div class="doc-meta">ALCHEMIST ENGINE v131.54<br>${data.length} RECORDS • ${date}</div>
+                    <div class="doc-meta">ALCHEMIST ENGINE v131.51<br>${data.length} RECORDS • ${date}</div>
                 </div>
                 ${data.map(d => `
                     <div class="item">
@@ -316,15 +313,12 @@
         setTimeout(() => { win.focus(); win.print(); }, 800);
     }
 
-    // Helper: Strip LaTeX for Print (Full Scientific)
     function formatPrint(t) {
         if(!t || t === "---") return "";
         return t.toString()
-            .replace(/\\alpha/g, 'α').replace(/\\beta/g, 'β').replace(/\\gamma/g, 'γ')
             .replace(/\\Delta/g, 'Δ').replace(/\\times/g, '×').replace(/\\to/g, '→').replace(/\\circ/g, '°')
             .replace(/\^\{([^}]+)\}/g, '<sup>$1</sup>').replace(/_\{([^}]+)\}/g, '<sub>$1</sub>')
-            .replace(/\^([0-9\+\-]+)/g, '<sup>$1</sup>').replace(/_([0-9]+)/g, '<sub>$1</sub>')
-            .replace(/([A-Z][a-z]?)(\d+)/g, '$1<sub>$2</sub>'); // C6H12 -> C₆H₁₂
+            .replace(/_([0-9]+)/g, '<sub>$1</sub>').replace(/\^([0-9]+)/g, '<sup>$1</sup>');
     }
 
     function exportData(type) {
