@@ -8,22 +8,54 @@
     <style>
         :root { --bg: #050505; --panel: #0a0a0a; --border: #1a1a1a; --gold: #ffd600; --blue: #2979FF; --green: #2ecc71; --red: #ff4444; }
         body { margin: 0; background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* HEADER */
         .header { padding: 15px 20px; border-bottom: 1px solid var(--border); background: #000; display: flex; justify-content: space-between; align-items: center; }
         h1 { font-weight: 900; color: var(--gold); font-size: 0.9rem; letter-spacing: 2px; margin: 0; text-transform: uppercase; }
         .nav-btn { background: #111; border: 1px solid #333; color: #fff; padding: 6px 12px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; cursor: pointer; text-decoration: none; }
-        .workspace { flex: 1; display: grid; grid-template-columns: 280px 1fr; gap: 1px; background: var(--border); overflow: hidden; }
+        .nav-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+        /* LAYOUT */
+        .workspace { flex: 1; display: grid; grid-template-columns: 300px 1fr; gap: 1px; background: var(--border); overflow: hidden; }
+        
+        /* SIDEBAR */
         .sidebar { background: var(--panel); display: flex; flex-direction: column; border-right: 1px solid var(--border); }
         .panel-head { padding: 15px; background: #080808; border-bottom: 1px solid var(--border); }
         .vault-list { flex: 1; overflow-y: auto; padding: 5px; }
-        .vault-item { display: flex; justify-content: space-between; padding: 12px; margin-bottom: 4px; background: #0e0e0e; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
-        .vault-item:hover { background: #151515; }
+        
+        /* VAULT ITEMS */
+        .vault-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 10px; margin-bottom: 4px; background: #0e0e0e; 
+            border: 1px solid var(--border); border-radius: 6px; 
+            transition: 0.2s;
+        }
+        .vault-item:hover { background: #151515; border-color: #333; }
+        .v-info { display: flex; flex-direction: column; cursor: pointer; flex: 1; }
+        .v-name { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #eee; font-weight: 700; }
+        .v-count { font-size: 0.6rem; color: #555; }
+        
+        /* ACTION BUTTONS */
+        .v-actions { display: flex; gap: 5px; }
+        .act-btn { 
+            padding: 4px 6px; border: 1px solid #222; background: #000; 
+            color: #666; font-size: 0.6rem; font-weight: 900; cursor: pointer; border-radius: 4px; 
+        }
+        .act-btn:hover { color: #fff; border-color: #444; }
+        .act-del:hover { color: var(--red); border-color: #500; }
+        .act-ren:hover { color: var(--gold); border-color: #550; }
+
+        /* EDITOR */
         .editor-area { background: #050505; display: flex; flex-direction: column; }
-        textarea { flex: 1; background: #000; color: var(--green); border: none; padding: 25px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; resize: none; }
-        .action-matrix { background: #080808; border-top: 1px solid var(--border); padding: 10px; display: flex; gap: 10px; flex-wrap: wrap; }
-        button { padding: 10px; border: 1px solid #222; background: #0e0e0e; color: #888; font-weight: 700; cursor: pointer; border-radius: 4px; flex: 1; }
+        textarea { flex: 1; background: #000; color: var(--green); border: none; padding: 25px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; resize: none; line-height: 1.5; outline: none; }
+        
+        /* FOOTER ACTIONS */
+        .action-matrix { background: #080808; border-top: 1px solid var(--border); padding: 10px; display: flex; gap: 10px; }
+        button { padding: 10px; border: 1px solid #222; background: #0e0e0e; color: #888; font-weight: 700; cursor: pointer; border-radius: 4px; flex: 1; font-size: 0.7rem; }
         button:hover { color: #fff; background: #151515; }
-        .btn-main { background: var(--blue); color: #fff; }
-        #vault-search { width: 100%; background: #111; border: 1px solid #222; color: #fff; padding: 8px; margin-top:10px; }
+        .btn-main { background: var(--blue); color: #fff; border: none; }
+        
+        #vault-search { width: 100%; background: #111; border: 1px solid #222; color: #fff; padding: 8px; margin-top:10px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; }
     </style>
 </head>
 <body>
@@ -37,18 +69,18 @@
     <div class="sidebar">
         <div class="panel-head">
             <span style="font-size:0.7rem; font-weight:900; color:#666;">VAULT REGISTRY</span>
-            <input type="text" id="vault-search" placeholder="FILTER..." onkeyup="refreshLib()">
+            <input type="text" id="vault-search" placeholder="FILTER SETS..." onkeyup="refreshLib()">
         </div>
         <div id="vault-list" class="vault-list"></div>
     </div>
 
     <div class="editor-area">
-        <textarea id="data-input" placeholder=">> LOAD A VAULT OR PASTE DATA"></textarea>
+        <textarea id="data-input" placeholder=">> SELECT A SET TO EDIT OR PASTE RAW DATA..."></textarea>
         <div class="action-matrix">
             <button onclick="generatePDF()" style="color:var(--gold); border-color:#443300;">PRINT PDF</button>
             <button onclick="exportData('json')">EXP JSON</button>
-            <button class="btn-main" onclick="atomicInjection()">INJECT DATA</button>
-            <button onclick="nukeVault()" style="color:var(--red);">DELETE</button>
+            <button onclick="exportData('csv')">EXP CSV</button>
+            <button class="btn-main" onclick="atomicInjection()">INJECT / SAVE DATA</button>
         </div>
     </div>
 </div>
@@ -61,16 +93,35 @@
     request.onupgradeneeded = e => e.target.result.createObjectStore("Vaults");
     request.onsuccess = e => { db = e.target.result; refreshLib(); };
 
+    // --- REGISTRY UI ---
     function refreshLib() {
         const list = document.getElementById('vault-list'); list.innerHTML = "";
         const filter = document.getElementById('vault-search').value.toLowerCase();
+        
         db.transaction(["Vaults"], "readonly").objectStore("Vaults").openCursor().onsuccess = e => {
             const cursor = e.target.result;
             if (cursor) {
                 if (!filter || cursor.key.toLowerCase().includes(filter)) {
                     const div = document.createElement('div'); div.className = "vault-item";
-                    div.innerHTML = `<span style="font-size:0.8rem; font-weight:bold; color:#eee">${cursor.key}</span><span style="color:#555; font-size:0.7rem">${cursor.value.length} items</span>`;
-                    div.onclick = () => loadVault(cursor.key);
+                    
+                    // The Info Click Area
+                    const info = document.createElement('div'); info.className = "v-info";
+                    info.innerHTML = `<span class="v-name">${cursor.key}</span><span class="v-count">${cursor.value.length} RECORDS</span>`;
+                    info.onclick = () => loadVault(cursor.key);
+                    
+                    // The Action Buttons
+                    const acts = document.createElement('div'); acts.className = "v-actions";
+                    
+                    const btnRen = document.createElement('button'); btnRen.className = "act-btn act-ren"; btnRen.innerText = "R";
+                    btnRen.onclick = (ev) => { ev.stopPropagation(); renameSet(cursor.key); };
+                    
+                    const btnDel = document.createElement('button'); btnDel.className = "act-btn act-del"; btnDel.innerText = "X";
+                    btnDel.onclick = (ev) => { ev.stopPropagation(); deleteSet(cursor.key); };
+
+                    acts.appendChild(btnRen);
+                    acts.appendChild(btnDel);
+                    div.appendChild(info);
+                    div.appendChild(acts);
                     list.appendChild(div);
                 }
                 cursor.continue();
@@ -78,12 +129,15 @@
         };
     }
 
+    // --- CORE OPERATIONS ---
     function loadVault(name) {
         currentVault = name;
         db.transaction(["Vaults"]).objectStore("Vaults").get(name).onsuccess = e => {
             const data = e.target.result || [];
             let tsv = R1_SCHEMA.join("\t") + "\n";
-            data.forEach(r => { tsv += R1_SCHEMA.map(k => r[k.toLowerCase()] || "---").join("\t") + "\n"; });
+            data.forEach(r => { 
+                tsv += R1_SCHEMA.map(k => (r[k.toLowerCase()] || "---").replace(/\t/g, " ")).join("\t") + "\n"; 
+            });
             document.getElementById('data-input').value = tsv;
         };
     }
@@ -91,8 +145,8 @@
     async function atomicInjection() {
         const raw = document.getElementById('data-input').value.trim();
         if (!raw) return alert("EMPTY");
+        
         let lines = raw.split(/\r?\n/).filter(l => l.trim() !== "");
-        // Header logic
         let hIdx = lines.findIndex(l => l.toLowerCase().includes("id"));
         if(hIdx === -1) { lines.unshift(R1_SCHEMA.join('\t')); hIdx = 0; } else { lines = lines.slice(hIdx); }
         
@@ -104,7 +158,11 @@
             if(cols.length < 2) continue;
             let obj = {};
             R1_SCHEMA.forEach(k => { obj[k.toLowerCase()] = (cols[map[k]] || "---").trim(); });
-            const set = obj.set !== "---" ? obj.set.toUpperCase() : "UNSORTED";
+            
+            // Auto-Correction: If Set is blank, use currentVault or "UNSORTED"
+            const set = (obj.set && obj.set !== "---") ? obj.set.toUpperCase() : (currentVault || "UNSORTED");
+            obj.set = set; // Enforce set name in record
+
             if(!batches[set]) batches[set] = [];
             batches[set].push(obj);
         }
@@ -113,14 +171,35 @@
         for(const set in batches) {
             tx.objectStore("Vaults").put(batches[set], set);
         }
-        tx.oncomplete = () => { alert("SAVED"); refreshLib(); };
+        tx.oncomplete = () => { alert("DATABASE UPDATED"); refreshLib(); };
     }
 
-    function nukeVault() {
-        if(currentVault && confirm("DELETE?")) {
+    function renameSet(oldName) {
+        const newName = prompt(`RENAME [${oldName}] TO:`, oldName);
+        if(!newName || newName === oldName) return;
+        
+        const tx = db.transaction(["Vaults"], "readwrite");
+        const store = tx.objectStore("Vaults");
+        
+        store.get(oldName).onsuccess = e => {
+            const data = e.target.result;
+            // Update the internal "set" property for consistency
+            data.forEach(item => item.set = newName.toUpperCase());
+            
+            store.delete(oldName);
+            store.put(data, newName.toUpperCase());
+        };
+        tx.oncomplete = () => { alert("RENAMED"); refreshLib(); };
+    }
+
+    function deleteSet(name) {
+        if(confirm(`PERMANENTLY DELETE [${name}]?`)) {
             const tx = db.transaction(["Vaults"], "readwrite");
-            tx.objectStore("Vaults").delete(currentVault);
-            tx.oncomplete = () => { document.getElementById('data-input').value = ""; refreshLib(); };
+            tx.objectStore("Vaults").delete(name);
+            tx.oncomplete = () => { 
+                if(currentVault === name) document.getElementById('data-input').value = ""; 
+                refreshLib(); 
+            };
         }
     }
 
@@ -128,7 +207,7 @@
         const raw = document.getElementById('data-input').value;
         const blob = new Blob([type === 'json' ? JSON.stringify(parseRaw(raw), null, 2) : raw], {type: "text/plain"});
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-        a.download = `backup.${type}`; a.click();
+        a.download = `${currentVault || 'backup'}.${type}`; a.click();
     }
 
     function parseRaw(raw) {
@@ -141,37 +220,43 @@
         });
     }
 
-    // --- PDF GENERATOR (FIXED BACKTICKS) ---
+    // --- PDF GENERATOR (FIXED) ---
     function generatePDF() {
         const data = parseRaw(document.getElementById('data-input').value);
-        if(!data.length) return alert("No Data");
+        if(!data.length) return alert("No Data Loaded");
         
         const win = window.open('', '_blank');
         const setID = currentVault || 'EXPORT';
-        
-        // CRITICAL: The string below uses BACKTICKS (`), not single quotes (')
+        const date = new Date().toLocaleDateString();
+
+        // Using Backticks correctly for template literals
         const html = `
             <!DOCTYPE html>
             <html>
             <head>
                 <title>${setID}</title>
                 <style>
-                    body { font-family: sans-serif; padding: 40px; }
-                    .item { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 20px; page-break-inside: avoid; }
-                    .q { font-size: 14pt; font-weight: bold; margin-bottom: 5px; }
-                    .ans { color: #444; font-style: italic; }
-                    .meta { font-size: 8pt; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+                    body { font-family: sans-serif; padding: 40px; color:#111; }
+                    .header { border-bottom: 2px solid #000; margin-bottom: 20px; padding-bottom: 10px; }
+                    .item { margin-bottom: 25px; border-bottom: 1px solid #ccc; padding-bottom: 15px; page-break-inside: avoid; }
+                    .q { font-size: 14pt; font-weight: bold; margin-bottom: 8px; }
+                    .ans { margin-left: 20px; font-style: italic; color: #444; }
+                    .expl { background: #f4f4f4; padding: 10px; margin-top: 5px; font-size: 0.9em; }
+                    .meta { font-size: 0.7em; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+                    sup { font-size: 0.6em; vertical-align: super; } 
+                    sub { font-size: 0.6em; vertical-align: sub; }
                 </style>
             </head>
             <body>
-                <h1>${setID}</h1>
-                <p>${data.length} ITEMS</p>
-                <hr>
+                <div class="header">
+                    <h1>${setID}</h1>
+                    <div>${data.length} RECORDS • ${date}</div>
+                </div>
                 ${data.map(d => `
                     <div class="item">
                         <div class="meta">${d.id} | ${d.dom} | LVL ${d.level}</div>
                         <div class="q">${fmt(d.question)}</div>
-                        <div class="ans">ANS: ${d.ans}</div>
+                        <div class="ans">ANSWER: ${d.ans === 'UP' ? fmt(d.up) : d.ans === 'RIGHT' ? fmt(d.right) : fmt(d.left)}</div>
                         <div class="expl">LOGIC: ${fmt(d.expl)}</div>
                     </div>
                 `).join('')}
@@ -187,7 +272,9 @@
     function fmt(t) {
         return (t||"").toString()
             .replace(/\^([0-9\+\-]+)/g, '<sup>$1</sup>')
-            .replace(/_([0-9]+)/g, '<sub>$1</sub>');
+            .replace(/_([0-9]+)/g, '<sub>$1</sub>')
+            .replace(/\\Delta/g, 'Δ')
+            .replace(/\\alpha/g, 'α');
     }
 </script>
 </body>
