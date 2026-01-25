@@ -1,7 +1,7 @@
 {
   "name": "Via.Stack",
   "short_name": "Via.Stack",
-  "start_url": "student.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
@@ -10,6 +10,11 @@
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
       "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]
