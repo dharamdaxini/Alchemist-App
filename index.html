@@ -1,220 +1,288 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VIA.STACK | TERMINAL</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#000000">
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0,
+               user-scalable=no, viewport-fit=cover">
+<title>VIA.STACK | SESSION v131.83</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,600;1,600&family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
-    <style>
-        :root { --bg: #000; --card: #111; --gold: #ffd600; --blue: #2979FF; --green: #2ecc71; --red: #ff4444; --font-chem: 'Crimson Text', serif; --font-ui: 'Inter', sans-serif; --font-code: 'JetBrains Mono', monospace; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
-        body { margin: 0; height: 100vh; background: var(--bg); color: #fff; font-family: var(--font-ui); overflow: hidden; position: fixed; width: 100%; touch-action: none; }
-        
-        /* --- LIBRARY PORTAL (v131.62 UI) --- */
-        #portal { height: 100%; padding: 40px 30px; overflow-y: auto; display: flex; flex-direction: column; z-index: 1000; touch-action: pan-y; }
-        .brand { color: var(--gold); font-weight: 900; font-size: 2rem; letter-spacing: -1px; }
-        .sub-brand { font-family: var(--font-code); font-size: 0.7rem; color: #555; margin-bottom: 30px; letter-spacing: 2px; }
-        .search-container { margin-bottom: 25px; position: sticky; top: 0; background: var(--bg); z-index: 10; padding-bottom: 10px; }
-        #search-box { width: 100%; background: #080808; border: 1px solid #222; padding: 15px; border-radius: 12px; color: var(--gold); font-family: var(--font-code); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,600;1,600&family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
 
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; padding-bottom: 50px; }
-        .tile { background: #0c0c0c; border: 1px solid #222; border-radius: 16px; padding: 25px; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; }
-        .tile:active { transform: scale(0.96); border-color: var(--gold); }
-        .tile-name { font-weight: 900; font-size: 0.9rem; color: #fff; display: block; margin-bottom: 5px; }
-        .tile-meta { font-family: var(--font-code); font-size: 0.65rem; color: #666; text-transform: uppercase; }
+<style>
+:root{
+  --bg:#000;
+  --card:#111;
+  --gold:#ffd600;
+  --blue:#2979FF;
+  --green:#2ecc71;
+  --font-chem:'Crimson Text', serif;
+  --font-ui:'Inter', sans-serif;
+  --font-code:'JetBrains Mono', monospace;
+}
 
-        /* --- SESSION HUD --- */
-        #header { width: 92%; margin: 25px auto 10px; z-index: 1000; display: none; }
-        .header-top { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-code); font-size: 0.7rem; color: #555; }
-        .progress-track { width: 100%; height: 3px; background: #1a1a1a; margin-top: 10px; border-radius: 10px; }
-        #progress-bar { height: 100%; background: var(--gold); width: 0%; transition: 0.3s; }
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+}
 
-        /* --- CARD STACK --- */
-        #stack { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 94%; max-width: 420px; height: 65vh; display: none; align-items: center; justify-content: center; z-index: 500; }
-        .card { position: absolute; width: 100%; height: 100%; background: #111; border-radius: 40px; border: 1px solid #262626; padding: 35px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.6); }
-        .card-q { font-family: var(--font-chem); font-size: 1.5rem; line-height: 1.4; color: #fff; font-weight: 600; }
-        .swipe-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.96); color: var(--gold); font-weight: 900; opacity: 0; pointer-events: none; border-radius: 40px; font-size: 1.2rem; letter-spacing: 3px; text-transform: uppercase; }
+body{
+  margin:0;
+  height:100vh;
+  background:var(--bg);
+  color:#fff;
+  font-family:var(--font-ui);
+  overflow:hidden;
+}
 
-        /* --- OVERLAY (Deep Dive) --- */
-        #overlay { position: fixed; inset: 0; background: #000; z-index: 2000; padding: 40px; display: none; flex-direction: column; }
-        .overlay-content { font-family: var(--font-chem); font-size: 1.1rem; color: #ddd; overflow-y: auto; flex: 1; margin-bottom: 20px; line-height: 1.6; }
-        .btn-close { padding: 20px; background: var(--gold); color: #000; border: none; border-radius: 12px; font-weight: 900; font-family: var(--font-ui); text-transform: uppercase; cursor: pointer; }
-        strong { color: var(--gold); font-family: var(--font-ui); font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase; display: block; margin-top: 20px; margin-bottom: 5px; }
+/* ================= HEADER ================= */
+#header{
+  width:92%;
+  margin:25px auto 10px;
+  display:none;
+}
+.header-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-family:var(--font-code);
+  font-size:0.7rem;
+  color:#555;
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+.progress-track{
+  width:100%;
+  height:3px;
+  background:#1a1a1a;
+  margin-top:10px;
+  border-radius:10px;
+}
+#progress-bar{
+  height:100%;
+  width:0%;
+  background:var(--gold);
+  transition:0.3s;
+}
 
-        /* --- REPORT SYSTEM --- */
-        #report-screen { position: fixed; inset: 0; background: #000; z-index: 3000; display: none; flex-direction: column; padding: 30px; overflow-y: auto; touch-action: pan-y; }
-        .report-header { color: var(--gold); font-weight: 900; font-size: 1.5rem; margin-bottom: 20px; text-transform: uppercase; border-bottom: 1px solid #222; padding-bottom: 10px; }
-        .report-item { margin-bottom: 40px; border-left: 2px solid #1a1a1a; padding-left: 15px; }
-        #suggestion-text { width: 100%; background: #000; border: 1px solid #222; color: #fff; padding: 15px; border-radius: 10px; font-family: var(--font-ui); height: 100px; resize: none; margin: 15px 0; }
+/* ================= STACK ================= */
+#stack{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:94%;
+  max-width:420px;
+  height:65vh;
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
 
-        sup { font-size: 0.6em; vertical-align: super; } sub { font-size: 0.6em; vertical-align: sub; } b { color: var(--gold); }
-    </style>
+.card{
+  position:absolute;
+  width:100%;
+  height:100%;
+  background:var(--card);
+  border-radius:40px;
+  border:1px solid #262626;
+  padding:35px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  box-shadow:0 30px 60px rgba(0,0,0,0.6);
+}
+
+.card-q{
+  font-family:var(--font-chem);
+  font-size:1.5rem;
+  line-height:1.4;
+  font-weight:600;
+  color:#fff;
+}
+
+/* ================= SWIPE LABEL ================= */
+.swipe-label{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,0.96);
+  opacity:0;
+  pointer-events:none;
+  border-radius:40px;
+  font-family:var(--font-code);
+  font-size:0.75rem;
+  letter-spacing:2px;
+  color:var(--gold);
+  text-transform:uppercase;
+}
+
+/* ================= OVERLAY ================= */
+#overlay{
+  position:fixed;
+  inset:0;
+  background:#000;
+  z-index:2000;
+  padding:40px;
+  display:none;
+  flex-direction:column;
+}
+
+.overlay-content{
+  font-family:var(--font-chem);
+  font-size:1.1rem;
+  line-height:1.6;
+  color:#ddd;
+  overflow-y:auto;
+  flex:1;
+}
+
+.label-block{
+  display:block;
+  margin-top:20px;
+  margin-bottom:6px;
+  font-family:var(--font-ui);
+  font-size:0.75rem;
+  font-weight:900;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:var(--gold);
+}
+
+.btn-action{
+  width:100%;
+  padding:20px;
+  background:var(--gold);
+  color:#000;
+  border:none;
+  border-radius:12px;
+  font-weight:900;
+  text-transform:uppercase;
+  font-family:var(--font-ui);
+}
+
+sup{font-size:0.6em}
+sub{font-size:0.6em}
+b{color:var(--gold)}
+</style>
 </head>
+
 <body>
 
-<div id="report-screen">
-    <div class="report-header">Session Report</div>
-    <div id="report-body"></div>
-    <div style="background:#0a0a0a; padding:20px; border-radius:15px; border:1px dashed #333;">
-        <span style="font-weight:900; font-size:0.7rem; color:var(--gold);">SUGGESTIONS</span>
-        <textarea id="suggestion-text" placeholder="Add observations for the database..."></textarea>
-        <button class="btn-close" onclick="submitFeedback()" style="width:100%;">SUBMIT & LOOP</button>
-    </div>
-</div>
-
-<div id="overlay">
-    <div id="overlay-text" class="overlay-content"></div>
-    <button class="btn-close" onclick="document.getElementById('overlay').style.display='none'">RESUME</button>
-</div>
-
-<div id="portal">
-    <div class="brand">VIA.STACK</div>
-    <div class="sub-brand">STUDENT TERMINAL v131.77</div>
-    <div class="search-container"><input type="text" id="search-box" placeholder="SEARCH TOPICS..." onkeyup="filterLibrary()"></div>
-    <div id="library" class="grid"></div>
-</div>
-
 <div id="header">
-    <div class="header-top"><span id="sess-xp">0 XP</span><span id="log-vault">VAULT</span></div>
-    <div class="progress-track"><div id="progress-bar"></div></div>
+  <div class="header-top">
+    <span id="sess-xp">0 XP</span>
+    <span id="log-vault">VAULT</span>
+  </div>
+  <div class="progress-track">
+    <div id="progress-bar"></div>
+  </div>
 </div>
 
 <div id="stack"></div>
 
+<div id="overlay">
+  <div id="overlay-text" class="overlay-content"></div>
+  <button class="btn-action" onclick="overlay.style.display='none'">RESUME</button>
+</div>
+
 <script>
-    const TELEMETRY_URL = "https://script.google.com/macros/s/AKfycbzw-sTiiKTYqtnXJusEmxpx2Wv-8UG2VPdY29WOTSLwUold9LuTpBOv80aVmUAGDlIa6w/exec";
-    const USER_ID = "STU_" + Math.random().toString(36).substr(2, 5).toUpperCase();
+/* ===== Boundary guard ===== */
+const ACTIVE_VAULT = sessionStorage.getItem("ACTIVE_VAULT");
+if(!ACTIVE_VAULT){ location.href="admin.html"; }
 
-    let db, VAULT = [], POOL = [], COMPLETED = [], CURR_NAME = "";
-    
-    // DB INIT
-    const request = indexedDB.open("AlchemistDB", 1);
-    request.onupgradeneeded = e => { e.target.result.createObjectStore("Vaults"); };
-    request.onsuccess = e => { db = e.target.result; loadLibrary(); };
+/* ===== State ===== */
+let db, VAULT=[], POOL=[], COMPLETED=[], SCORE=0;
 
-    function loadLibrary() {
-        const grid = document.getElementById('library'); grid.innerHTML = "";
-        db.transaction(["Vaults"], "readonly").objectStore("Vaults").openCursor().onsuccess = e => {
-            const cursor = e.target.result;
-            if (cursor) {
-                const el = document.createElement('div');
-                el.className = "tile";
-                el.innerHTML = `<span class="tile-name">${cursor.key}</span><span class="tile-meta">${cursor.value.length} MODULES</span>`;
-                el.onclick = () => startSession(cursor.key);
-                grid.appendChild(el);
-                cursor.continue();
-            }
-        };
+/* ===== DB ===== */
+indexedDB.open("AlchemistDB",1).onsuccess=e=>{
+  db=e.target.result;
+  start();
+};
+
+function start(){
+  document.getElementById("header").style.display="block";
+  document.getElementById("stack").style.display="flex";
+  document.getElementById("log-vault").innerText=ACTIVE_VAULT;
+
+  db.transaction("Vaults").objectStore("Vaults")
+  .get(ACTIVE_VAULT).onsuccess=e=>{
+    const res=e.target.result;
+    VAULT=res?.data||res||[];
+    POOL=VAULT.slice().sort(()=>0.5-Math.random());
+    render();
+  };
+}
+
+function render(){
+  if(!POOL.length){ location.href="admin.html"; return; }
+
+  const q=POOL[0];
+  document.getElementById("progress-bar").style.width=
+    ((COMPLETED.length/(COMPLETED.length+POOL.length))*100)+"%";
+  document.getElementById("sess-xp").innerText=SCORE+" XP";
+
+  const s=document.getElementById("stack");
+  s.innerHTML="";
+  const c=document.createElement("div");
+  c.className="card";
+  c.innerHTML=`
+    <div class="card-q">${fmt(q.question)}</div>
+    <div class="swipe-label">RELEASE TO COMMIT</div>
+  `;
+  s.appendChild(c);
+  bind(c,q);
+}
+
+function bind(el,q){
+  let x=0,y=0,sx=0,sy=0,active=false;
+  el.ontouchstart=e=>{active=true;sx=e.touches[0].clientX;sy=e.touches[0].clientY;};
+  el.ontouchmove=e=>{
+    if(!active)return;
+    x=e.touches[0].clientX-sx;
+    y=e.touches[0].clientY-sy;
+    el.style.transform=`translate3d(${x}px,${y}px,0) rotate(${x/20}deg)`;
+    el.querySelector(".swipe-label").style.opacity=
+      Math.sqrt(x*x+y*y)>60?1:0;
+  };
+  el.ontouchend=()=>{
+    if(!active)return;active=false;
+    if(Math.sqrt(x*x+y*y)>100){
+      if(y>80){ showOverlay(q); }
+      else{
+        if(q.ans && q.ans==="RIGHT" && x>0) SCORE+=10;
+        if(q.ans && q.ans==="LEFT" && x<0) SCORE+=10;
+        COMPLETED.push(POOL.shift());
+        render();
+      }
     }
+    el.style.transform="none";
+  };
+}
 
-    function filterLibrary() {
-        const query = document.getElementById('search-box').value.toLowerCase();
-        document.querySelectorAll('.tile').forEach(t => t.style.display = t.innerText.toLowerCase().includes(query) ? "flex" : "none");
-    }
+function showOverlay(q){
+  overlay.style.display="flex";
+  overlayText.innerHTML=`
+    <span class="label-block">Theoretical Logic</span>${fmt(q.expl)}
+    <span class="label-block">What to learn now</span>${fmt(q.step_1)}
+    <span class="label-block">What to learn next</span>${fmt(q.step_2)}
+    <span class="label-block">Hint</span>${fmt(q.context)}
+  `;
+}
 
-    function startSession(name) {
-        CURR_NAME = name;
-        db.transaction(["Vaults"]).objectStore("Vaults").get(name).onsuccess = e => {
-            VAULT = e.target.result || [];
-            POOL = VAULT.sort(() => 0.5 - Math.random()).slice(0, 20);
-            COMPLETED = [];
-            document.getElementById('portal').style.display = 'none';
-            document.getElementById('header').style.display = 'block';
-            document.getElementById('stack').style.display = 'flex';
-            document.getElementById('log-vault').innerText = name;
-            renderCard();
-        };
-    }
-
-    function renderCard() {
-        const s = document.getElementById('stack'); s.innerHTML = "";
-        if (!POOL.length) return showReport();
-        const q = POOL[0];
-        document.getElementById('progress-bar').style.width = `${(COMPLETED.length/20)*100}%`;
-        document.getElementById('sess-xp').innerText = `${COMPLETED.length * 10} XP`;
-
-        const c = document.createElement('div'); c.className = "card";
-        c.innerHTML = `<div class="card-q">${fmt(q.question)}</div><div class="swipe-label">RELEASE TO COMMIT</div>`;
-        s.appendChild(c); 
-        bindPhysics(c, q);
-    }
-
-    // UNIT CIRCLE PHYSICS ENGINE
-    function bindPhysics(el, q) {
-        let x=0, y=0, sx=0, sy=0, active=false;
-        el.ontouchstart = e => { active=true; sx=e.touches[0].clientX; sy=e.touches[0].clientY; el.style.transition="none"; };
-        el.onmousedown = e => { active=true; sx=e.clientX; sy=e.clientY; el.style.transition="none"; };
-        
-        const move = (cx, cy) => {
-            if (!active) return;
-            x = cx-sx; y = cy-sy;
-            requestAnimationFrame(() => { if(active) el.style.transform = `translate3d(${x}px,${y}px,0) rotate(${x/20}deg)`; });
-            el.querySelector('.swipe-label').style.opacity = Math.sqrt(x*x+y*y) > 60 ? 1 : 0;
-        };
-        
-        window.onmousemove = e => move(e.clientX, e.clientY);
-        window.ontouchmove = e => move(e.touches[0].clientX, e.touches[0].clientY);
-        
-        window.onmouseup = window.ontouchend = () => {
-            if(!active) return; active=false;
-            const dist = Math.sqrt(x*x+y*y);
-            if(dist > 100) {
-                if (y > 80 && Math.abs(x) < 50) { showOverlay(q); el.style.transform="none"; } 
-                else { COMPLETED.push(POOL.shift()); renderCard(); }
-            } else { el.style.transition="0.3s"; el.style.transform="none"; }
-        };
-    }
-
-    function showOverlay(d) {
-        document.getElementById('overlay-text').innerHTML = `
-            <strong>Theoretical Logic</strong>${fmt(d.expl)}<br><br>
-            <strong>Step 1: What to learn now</strong>${fmt(d.step_1)}<br>
-            <strong>Step 2: What to learn next</strong>${fmt(d.step_2)}<br>
-            <strong>Hint</strong>${fmt(d.context)}
-        `;
-        document.getElementById('overlay').style.display = 'flex';
-    }
-
-    function showReport() {
-        document.getElementById('header').style.display = 'none';
-        document.getElementById('stack').style.display = 'none';
-        const body = document.getElementById('report-body'); body.innerHTML = "";
-        COMPLETED.forEach(d => {
-            const item = document.createElement('div'); item.className = "report-item";
-            item.innerHTML = `
-                <div style="font-family:var(--font-chem); font-size:1.2rem;">${fmt(d.question)}</div>
-                <div style="color:var(--green); font-family:var(--font-code); font-size:0.7rem; margin:10px 0;">RIGHT ANS: ${fmt(d[d.ans.toLowerCase()])}</div>
-                <strong>Theoretical Logic</strong><div style="font-size:0.9rem; color:#888;">${fmt(d.expl)}</div>
-                <strong>Hint</strong><div style="font-size:0.9rem; color:#888;">${fmt(d.context)}</div>
-            `;
-            body.appendChild(item);
-        });
-        document.getElementById('report-screen').style.display = 'flex';
-    }
-
-    function submitFeedback() {
-        const text = document.getElementById('suggestion-text').value;
-        fetch(TELEMETRY_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ uid: USER_ID, set: CURR_NAME, feedback: text }) });
-        location.reload();
-    }
-
-    function fmt(t) {
-        if (!t || t === "---") return "";
-        let txt = t.toString().replace(/\$/g, '')
-            .replace(/Spin-Orbit Coupling/g, '<b>Spin-Orbit Coupling</b>')
-            .replace(/\(SOC\)/g, '<b>(SOC)</b>')
-            .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-        txt = txt.replace(/\\alpha/g, 'α').replace(/\\beta/g, 'β').replace(/\\gamma/g, 'γ').replace(/\\Delta/g, 'Δ');
-        txt = txt.replace(/\^\{([^}]+)\}/g, '<sup>$1</sup>').replace(/\^([0-9\+\-]+)/g, '<sup>$1</sup>');
-        txt = txt.replace(/_\{([^}]+)\}/g, '<sub>$1</sub>').replace(/_([0-9]+)/g, '<sub>$1</sub>');
-        return txt;
-    }
+function fmt(t){
+  if(!t||t==="---")return "";
+  let txt=t.toString()
+    .replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')
+    .replace(/\^\{([^}]+)\}/g,'<sup>$1</sup>')
+    .replace(/_\{([^}]+)\}/g,'<sub>$1</sub>');
+  return txt;
+}
 </script>
+
 </body>
 </html>
