@@ -2,107 +2,182 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>VIA.STACK | SESSION v131.83</title>
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0,
+               user-scalable=no, viewport-fit=cover">
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Crimson+Text:wght@600&display=swap" rel="stylesheet">
+<title>VIA.STACK | ADMIN REGISTRY v131.20</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
 
 <style>
-body{margin:0;background:#000;color:#fff;font-family:Inter,sans-serif}
-#top{padding:20px}
-#vault{font-size:.7rem;color:#555}
-#xp{color:#ffd600;font-weight:900}
-#stack{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
-.card{width:90%;max-width:420px;height:65vh;background:#0e0e0e;
-border-radius:40px;padding:30px;font-family:Crimson Text,serif;
-font-size:1.5rem;text-align:center;display:flex;align-items:center;
-justify-content:center}
-#overlay{position:fixed;inset:0;background:#000;display:none;
-flex-direction:column;padding:30px}
-button{margin-top:auto;padding:18px;background:#ffd600;
-border:none;border-radius:14px;font-weight:900}
+:root{
+  --bg:#000;
+  --card:#0c0c0c;
+  --gold:#ffd600;
+  --muted:#666;
+  --border:#222;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;
+  height:100vh;
+  background:var(--bg);
+  color:#fff;
+  font-family:'Inter',sans-serif;
+  overflow:hidden;
+}
+
+/* ─── HEADER ───────────────────── */
+#top{
+  padding:40px 30px 20px;
+}
+.brand{
+  color:var(--gold);
+  font-weight:900;
+  font-size:2.4rem;
+}
+.sub{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.7rem;
+  color:var(--muted);
+  margin-top:4px;
+}
+
+/* ─── ACTIONS ──────────────────── */
+.actions{
+  display:flex;
+  gap:16px;
+  margin:30px;
+}
+.btn{
+  flex:1;
+  padding:22px;
+  border-radius:28px;
+  font-weight:900;
+  text-transform:uppercase;
+  font-size:.85rem;
+  cursor:pointer;
+  border:none;
+}
+.btn-gold{ background:var(--gold); color:#000; }
+.btn-dark{ background:#111; border:2px solid #333; color:#777; }
+.btn:active{ transform:scale(.96); }
+
+/* ─── VAULT LIST ───────────────── */
+.section{
+  padding:10px 30px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:.7rem;
+  letter-spacing:2px;
+  color:#3fa96a;
+}
+.grid{
+  padding:10px 30px 40px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  overflow-y:auto;
+}
+.tile{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:26px;
+  cursor:pointer;
+}
+.tile:active{
+  border-color:var(--gold);
+  background:#111;
+}
+.tile-name{
+  font-weight:900;
+  font-size:.95rem;
+}
+.tile-meta{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.65rem;
+  color:#666;
+}
+
+/* ─── FOOTER ───────────────────── */
+.footer{
+  position:absolute;
+  bottom:16px;
+  width:100%;
+  text-align:center;
+  font-family:'JetBrains Mono',monospace;
+  font-size:.6rem;
+  color:#444;
+}
 </style>
 </head>
 
 <body>
 
+<!-- HEADER -->
 <div id="top">
-<div id="vault"></div>
-<div id="xp">0 XP</div>
+  <div class="brand">Via.Stack</div>
+  <div class="sub">ADMIN REGISTRY // SESSION HANDOFF</div>
 </div>
 
-<div id="stack"></div>
-
-<div id="overlay">
-<div id="logic"></div>
-<button onclick="closeOverlay()">RESUME</button>
+<!-- ACTIONS -->
+<div class="actions">
+  <button class="btn btn-gold" onclick="launchFirstVault()">START ENGINE</button>
+  <button class="btn btn-dark" onclick="location.href='tool.html'">MANAGE DATA</button>
 </div>
+
+<!-- VAULTS -->
+<div class="section">✓ VAULT REGISTRY</div>
+<div id="vaultGrid" class="grid"></div>
+
+<div class="footer">IndexedDB · Local · Engine-Compatible</div>
 
 <script>
-const key=sessionStorage.getItem("ACTIVE_VAULT");
-if(!key)location.href="admin.html";
+let db;
 
-let db,POOL=[],DONE=[],XP=0;
-
-indexedDB.open("AlchemistDB",1).onsuccess=e=>{
-  db=e.target.result;
-  load();
+/* ─── DB INIT ──────────────────── */
+const req = indexedDB.open("AlchemistDB", 1);
+req.onupgradeneeded = e=>{
+  e.target.result.createObjectStore("Vaults");
+};
+req.onsuccess = e=>{
+  db = e.target.result;
+  loadVaults();
 };
 
-function load(){
-  document.getElementById("vault").innerText=key;
-  db.transaction("Vaults").objectStore("Vaults")
-  .get(key).onsuccess=e=>{
-    POOL=[...e.target.result.data].sort(()=>0.5-Math.random());
-    next();
-  };
+/* ─── LOAD VAULTS ──────────────── */
+function loadVaults(){
+  const grid = document.getElementById("vaultGrid");
+  grid.innerHTML = "";
+
+  db.transaction("Vaults","readonly")
+    .objectStore("Vaults")
+    .openCursor().onsuccess = e=>{
+      const c = e.target.result;
+      if(!c) return;
+
+      const data = c.value?.data || c.value || [];
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      tile.innerHTML = `
+        <div class="tile-name">${c.key}</div>
+        <div class="tile-meta">${data.length} MODULES</div>
+      `;
+      tile.onclick = ()=>{
+        sessionStorage.setItem("ACTIVE_VAULT", c.key);
+        location.href = "index.html";
+      };
+      grid.appendChild(tile);
+      c.continue();
+    };
 }
 
-function next(){
-  if(!POOL.length){
-    document.body.innerHTML="<h2 style='color:#ffd600;text-align:center;margin-top:40vh'>DONE</h2>";
-    return;
-  }
-  const q=POOL[0];
-  render(q);
-}
-
-function render(q){
-  const s=document.getElementById("stack");
-  s.innerHTML="";
-  const c=document.createElement("div");
-  c.className="card";
-  c.innerText=q.question||"—";
-  s.appendChild(c);
-
-  let sx=0,x=0,drag=false;
-
-  c.ontouchstart=e=>{drag=true;sx=e.touches[0].clientX};
-  c.ontouchmove=e=>{
-    if(!drag)return;
-    x=e.touches[0].clientX-sx;
-    c.style.transform=`translateX(${x}px) rotate(${x/25}deg)`;
-  };
-  c.ontouchend=()=>{
-    drag=false;
-    if(Math.abs(x)>120){
-      if((x>0&&q.ans==="RIGHT")||(x<0&&q.ans==="LEFT"))XP+=10;
-      DONE.push(POOL.shift());
-      document.getElementById("xp").innerText=XP+" XP";
-      next();
-    }else if(x<-40){
-      showLogic(q);
-    }
-    c.style.transform="none";
-  };
-}
-
-function showLogic(q){
-  document.getElementById("logic").innerText=q.expl||"";
-  document.getElementById("overlay").style.display="flex";
-}
-function closeOverlay(){
-  document.getElementById("overlay").style.display="none";
+/* ─── QUICK START ──────────────── */
+function launchFirstVault(){
+  const first = document.querySelector(".tile");
+  if(first) first.click();
+  else alert("No vaults found. Import data first.");
 }
 </script>
 
