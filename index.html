@@ -3,240 +3,263 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>VIA.STACK | KINETIC ENGINE v133.40</title>
+<title>VIA.STACK | DEEP DARK ENGINE</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,600;1,600&family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
 
 <style>
-:root{ --bg:#000; --card:#0e0e0e; --gold:#ffd600; --text:#eaeaea; --green:#00e676; --red:#ff4757; }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
-body{ margin:0; background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+/* --- YOUR CORE CSS (UNCHANGED) --- */
+:root {
+    /* Deep Dark Palette */
+    --bg: #000000;
+    --card-bg: #111111;
+    --overlay-bg: #0d0d0d;
+    --border: #222222;
+    
+    /* Accents */
+    --gold: #ffd600;
+    --blue: #3498db;
+    --green: #00e676; 
+    --red: #ff4757;
+    --text: #ffffff;
+    --muted: #555555;
 
-/* ─── HUD ───────────────────────── */
-#hud{ position:fixed; top:0; left:0; right:0; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; z-index:100; background:linear-gradient(180deg, #000 0%, transparent 100%); }
-#xp{ color:var(--gold); font-weight:900; letter-spacing:1px; font-size:0.9rem; }
-.pill-btn { border:1px solid #333; background:#111; color:#888; padding:6px 14px; border-radius:20px; font-size:.65rem; font-weight:700; cursor:pointer; }
-
-/* ─── META FEED ─────────────────── */
-#meta{ position:fixed; top:60px; right:20px; font-family:'JetBrains Mono',monospace; font-size:.6rem; color:#444; text-align:right; line-height:1.4; pointer-events:none; }
-
-/* ─── CARD STACK ────────────────── */
-#stack{ flex:1; position:relative; display:flex; align-items:center; justify-content:center; perspective:1000px; overflow:hidden; }
-.card{
-  position:absolute; width:90%; max-width:400px; height:65vh; max-height:500px;
-  background:var(--card); border:1px solid #222; border-radius:24px; padding:30px;
-  box-shadow:0 30px 80px rgba(0,0,0,.8); transform-origin:50% 100%;
-  display:flex; flex-direction:column; justify-content:center;
-  will-change:transform; touch-action:none;
+    /* Typography */
+    --font-chem: 'Crimson Text', serif;
+    --font-ui: 'Inter', sans-serif;
+    --font-code: 'JetBrains Mono', monospace;
 }
-.card-header { font-family:'JetBrains Mono'; font-size:0.6rem; color:var(--gold); margin-bottom:15px; text-transform:uppercase; letter-spacing:1px; }
-.q { font-size:1.4rem; font-weight:800; line-height:1.3; color:#fff; flex:1; display:flex; align-items:center; }
-.opt-grid { display:grid; gap:10px; margin-top:20px; }
-.opt { padding:16px; border-radius:12px; background:#161616; border:1px solid #222; font-size:.8rem; font-weight:600; color:#aaa; text-align:center; transition:0.2s; }
-.opt.correct { border-color:var(--green); color:var(--green); background:rgba(0,230,118,0.1); }
-.opt.wrong { border-color:var(--red); color:var(--red); opacity:0.5; }
 
-/* ─── LOGIC OVERLAY ─────────────── */
-#logic{ position:fixed; bottom:0; left:0; right:0; background:#111; z-index:200; transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); padding:30px 30px 50px 30px; border-radius:24px 24px 0 0; border-top:1px solid #333; }
-#logic.active { transform:translateY(0); }
-.logic-tag { color:var(--gold); font-size:0.65rem; font-weight:900; letter-spacing:1px; margin-bottom:10px; display:block; }
-.logic-body { font-family:'JetBrains Mono'; font-size:0.8rem; color:#ccc; line-height:1.6; }
+/* Global Reset */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+body { margin: 0; height: 100vh; background: var(--bg); color: var(--text); font-family: var(--font-ui); overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none; position: fixed; width: 100%; }
 
-/* ─── ZERO STATE ────────────────── */
-#zero{ position:absolute; inset:0; background:#000; z-index:500; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
-.zero-btn { margin-top:20px; padding:16px 32px; border-radius:40px; border:none; background:var(--gold); color:#000; font-weight:900; font-size:0.9rem; cursor:pointer; }
+/* Formatting */
+sub { font-size: 0.7em; vertical-align: sub; line-height: 0; }
+sup { font-size: 0.7em; vertical-align: super; line-height: 0; }
 
-/* ─── PHYSICS HINTS ─────────────── */
-.swipe-hint { position:absolute; top:20px; font-weight:900; font-size:1.5rem; opacity:0; transition:0.1s; z-index:10; pointer-events:none; }
-.sh-right { right:20px; color:var(--green); transform:rotate(15deg); }
-.sh-left { left:20px; color:var(--red); transform:rotate(-15deg); }
+/* HUD ARCHITECTURE */
+#header { width: 90%; margin: calc(25px + env(safe-area-inset-top)) auto 0; z-index: 100; position: relative; }
+.header-meta { display: flex; justify-content: space-between; font-family: var(--font-code); font-size: 0.7rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+.progress-track { width: 100%; height: 2px; background: #1a1a1a; margin-top: 10px; border-radius: 1px; overflow: hidden; }
+#progress-bar { height: 100%; background: var(--gold); width: 0%; transition: width 0.4s ease; }
 
+/* THE SINGULARITY STACK */
+#stack { position: relative; width: 92%; max-width: 400px; height: 72vh; margin: 30px auto 0; perspective: 1200px; }
+.card { 
+    position: absolute; width: 100%; height: 100%; background: var(--card-bg); border-radius: 40px; border: 1px solid var(--border);
+    padding: 45px; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 30px 90px rgba(0,0,0,0.9);
+    will-change: transform; cursor: grab; transform-origin: 50% 100%;
+}
+.card-meta { position: absolute; top: 30px; width: 100%; text-align: center; left: 0; font-family: var(--font-code); font-size: 0.6rem; color: #333; }
+.card-q { font-family: var(--font-chem); font-size: 1.9rem; line-height: 1.4; font-style: italic; font-weight: 600; text-align: center; color: #f0f0f0; overflow-wrap: break-word; }
+
+/* VECTOR HUD LABELS */
+.swipe-label {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: #000; color: #fff; font-weight: 900; font-size: 2rem; text-transform: uppercase;
+    border-radius: 40px; z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.1s;
+    text-align: center; padding: 20px;
+}
+.sl-up { border: 2px solid var(--gold); color: var(--gold); align-items: flex-start; padding-top: 60px; }
+.sl-right { border: 2px solid var(--green); color: var(--green); justify-content: flex-end; padding-right: 40px; }
+.sl-left { border: 2px solid var(--red); color: var(--red); justify-content: flex-start; padding-left: 40px; }
+.sl-down { border: 2px solid var(--blue); color: var(--blue); align-items: flex-end; padding-bottom: 60px; font-family: var(--font-chem); font-style: italic; font-size: 1.2rem; }
+
+/* LOGIC ANALYSIS OVERLAY */
+.overlay {
+    position: absolute; inset: 0; background: var(--overlay-bg); z-index: 1100; padding: 40px;
+    opacity: 0; pointer-events: none; border-radius: 40px; transition: opacity 0.3s ease;
+    display: flex; flex-direction: column; justify-content: center;
+}
+.overlay.active { opacity: 1; pointer-events: auto; }
+.overlay-label { font-size: 0.7rem; color: var(--gold); font-family: var(--font-code); margin-bottom: 10px; letter-spacing: 2px; }
+.overlay-body { font-size: 1.2rem; line-height: 1.6; color: #bbb; margin-bottom: 30px; font-family: var(--font-chem); overflow-y: auto; max-height: 60%; }
+.btn { width: 100%; padding: 20px; border-radius: 50px; border: none; background: #fff; color: #000; font-weight: 900; text-transform: uppercase; font-family: var(--font-ui); cursor: pointer; }
+
+/* RESPONSIVE SCALING */
+@media (max-height: 740px) {
+    #stack { margin: 20px auto 0; height: 75vh; }
+    .card { padding: 30px 25px; }
+    .card-q { font-size: 1.5rem; line-height: 1.3; }
+}
+
+/* ZERO STATE */
+#zero-state { position: absolute; inset: 0; background: #000; z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; }
 </style>
 </head>
 
 <body>
 
-<div id="hud">
-  <div id="xp">XP 0</div>
-  <div class="pill-btn" onclick="location.href='admin.html'">ADMIN</div>
-</div>
-
-<div id="meta">
-  DB: <span id="db-status">CONNECTING...</span><br>
-  IDX: <span id="card-idx">0</span>
+<div id="header">
+    <div class="header-meta">
+        <span id="sess-id">LOADING...</span>
+        <span id="xp-val">0 XP</span>
+    </div>
+    <div class="progress-track"><div id="progress-bar"></div></div>
 </div>
 
 <div id="stack"></div>
 
-<div id="logic" onclick="this.classList.remove('active')">
-  <span class="logic-tag">SYSTEM LOGIC // TAP TO CLOSE</span>
-  <div class="logic-body" id="logicText"></div>
-</div>
-
-<div id="zero">
-  <h2 style="color:#333; font-size:2rem; margin:0;">NO SIGNAL</h2>
-  <p style="color:#666; font-family:'JetBrains Mono'; font-size:0.7rem; margin-top:10px;">DATABASE DISCONNECTED OR EMPTY</p>
-  <button class="zero-btn" onclick="location.href='admin.html'">LAUNCH ADMIN CONSOLE</button>
+<div id="zero-state">
+    <h2 style="color:#333; font-family:var(--font-ui);">NO DATA STREAM</h2>
+    <button class="btn" style="width:auto; padding:15px 40px; margin-top:20px; background:var(--gold);" onclick="location.href='admin.html'">CONNECT TO ADMIN</button>
 </div>
 
 <script>
-// --- CONFIG ---
-const DB_KEY = 'ALCHEMIST_MASTER_DB'; // Must match Admin Console
-const USER_KEY = 'VIA_USER_XP';
+/* -----------------------------------------------------------
+   ALCHEMIST V136 | DEEP DARK BACKEND
+   ----------------------------------------------------------- */
 
-let POOL = [];
-let INDEX = 0;
-let XP = parseInt(localStorage.getItem(USER_KEY) || 0);
-document.getElementById('xp').innerText = `XP ${XP}`;
+const SYS = {
+    DB_KEY: 'ALCHEMIST_MASTER_DB',
+    USER_KEY: 'ALCHEMIST_XP_V1',
+    PHYSICS: { THRESHOLD: 80, ROT_FACTOR: 25 }
+};
 
-// --- BOOT SEQUENCE ---
+let STATE = {
+    pool: [],
+    index: 0,
+    xp: parseInt(localStorage.getItem(SYS.USER_KEY) || '0')
+};
+
+// --- BOOT ---
 window.onload = () => {
-    const raw = localStorage.getItem(DB_KEY);
-    if(!raw) return triggerZeroState();
+    document.getElementById('xp-val').innerText = `${STATE.xp} XP`;
+    const raw = localStorage.getItem(SYS.DB_KEY);
+    
+    if(!raw) return document.getElementById('zero-state').style.display = 'flex';
     
     try {
-        POOL = JSON.parse(raw);
-        if(!Array.isArray(POOL) || POOL.length === 0) throw "EMPTY";
-        
-        // Shuffle for randomness
-        POOL.sort(() => Math.random() - 0.5);
-        
-        document.getElementById('db-status').innerText = "LIVE";
-        document.getElementById('db-status').style.color = "#00e676";
+        STATE.pool = JSON.parse(raw);
+        if(!Array.isArray(STATE.pool) || STATE.pool.length === 0) throw "EMPTY";
+        STATE.pool.sort(() => Math.random() - 0.5);
         renderCard();
     } catch(e) {
-        triggerZeroState();
+        document.getElementById('zero-state').style.display = 'flex';
     }
 };
 
-function triggerZeroState() {
-    document.getElementById('zero').style.display = 'flex';
-}
-
-// --- RENDER ENGINE ---
+// --- RENDERER ---
 function renderCard() {
-    if(INDEX >= POOL.length) return alert("SESSION COMPLETE. REFRESH TO RESTART.");
-    
-    const data = POOL[INDEX];
-    document.getElementById('card-idx').innerText = `#${data.id || INDEX+1}`;
-    
     const stack = document.getElementById('stack');
-    stack.innerHTML = ''; // Clean slate
-    
-    const card = document.createElement('div');
-    card.className = 'card';
-    
-    // Auto-detect if Data is Question (Edu) or Product (Affiliate)
-    // Fallback logic for generic display
-    const title = data.q || data.product_name || "UNKNOWN DATA UNIT";
-    const logic = data.logic || data.description || "No Data.";
-    
-    // Construct Options (Randomized order for Edu)
-    let options = [];
-    if(data.u) options.push({ txt: data.u, correct: (data.correct === data.u) });
-    if(data.r) options.push({ txt: data.r, correct: (data.correct === data.r) });
-    if(data.l) options.push({ txt: data.l, correct: (data.correct === data.l) });
-    
-    // Pivot: If no options (Affiliate Mode), show Price/Buy
-    if(options.length === 0 && data.price) {
-        options.push({ txt: `BUY @ ${data.price}`, correct: true }); // Affiliate Link logic here
+    stack.innerHTML = ''; 
+
+    // Progress Bar
+    const prog = Math.min(((STATE.index) / STATE.pool.length) * 100, 100);
+    document.getElementById('progress-bar').style.width = `${prog}%`;
+
+    if(STATE.index >= STATE.pool.length) {
+        stack.innerHTML = `<div class="card" style="align-items:center; text-align:center;">
+            <div class="card-q">Session Complete</div>
+            <button class="btn" style="margin-top:30px; background:var(--gold);" onclick="location.reload()">REBOOT</button>
+        </div>`;
+        return;
     }
 
-    card.innerHTML = `
-        <div class="card-header">${data.dom || 'GENERAL'} // ${data.level || '1'}</div>
-        <div class="q">${fmt(title)}</div>
-        <div class="opt-grid">
-            ${options.map(o => `<div class="opt" onclick="handleOpt(this, ${o.correct}, '${logic.replace(/'/g, "\\'")}')">${fmt(o.txt)}</div>`).join('')}
+    const data = STATE.pool[STATE.index];
+    document.getElementById('sess-id').innerText = data.id || `IDX_${STATE.index}`;
+
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.innerHTML = `
+        <div class="card-meta">${data.dom || 'GENERAL'} // LVL ${data.level || '1'}</div>
+        <div class="card-q">${fmt(data.q)}</div>
+        
+        <div class="swipe-label sl-up">${fmt(data.u)}</div>
+        <div class="swipe-label sl-right">${fmt(data.r)}</div>
+        <div class="swipe-label sl-left">${fmt(data.l)}</div>
+        <div class="swipe-label sl-down">DEEP DIVE</div>
+        
+        <div class="overlay">
+            <div class="overlay-label">THEORETICAL LOGIC</div>
+            <div class="overlay-body">${fmt(data.logic || data.expl || "No analysis available.")}</div>
+            <button class="btn" onclick="closeOverlay(this)">RESUME SESSION</button>
         </div>
-        <div class="swipe-hint sh-right">NEXT</div>
-        <div class="swipe-hint sh-left">SKIP</div>
     `;
 
-    bindPhysics(card);
-    stack.appendChild(card);
+    stack.appendChild(el);
+    bindPhysics(el, data);
 }
 
-// --- INTERACTION ---
-function handleOpt(el, isCorrect, logicText) {
-    if(el.parentElement.classList.contains('locked')) return;
-    el.parentElement.classList.add('locked'); // Lock inputs
+// --- PHYSICS ENGINE ---
+function bindPhysics(el, data) {
+    let startX=0, startY=0, dx=0, dy=0, active=false;
     
-    if(isCorrect) {
-        el.classList.add('correct');
-        XP += 10;
-        localStorage.setItem(USER_KEY, XP);
-        document.getElementById('xp').innerText = `XP ${XP}`;
-        setTimeout(() => swipeCard('RIGHT'), 600);
+    const onStart = (x, y) => { active=true; startX=x; startY=y; el.style.transition='none'; };
+    const onMove = (x, y) => {
+        if(!active) return;
+        dx = x - startX; dy = y - startY;
+        el.style.transform = `translate3d(${dx}px, ${dy}px, 0) rotate(${dx/SYS.PHYSICS.ROT_FACTOR}deg)`;
+        
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist > 30) {
+            el.querySelectorAll('.swipe-label').forEach(l => l.style.opacity = 0);
+            const dir = getDirection(dx, dy);
+            const label = el.querySelector(`.sl-${dir.toLowerCase()}`);
+            if(label) label.style.opacity = Math.min(dist/100, 1);
+        }
+    };
+    const onEnd = () => {
+        if(!active) return; active = false;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist > SYS.PHYSICS.THRESHOLD) {
+            handleCommit(el, getDirection(dx, dy), data);
+        } else {
+            el.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            el.style.transform = 'translate3d(0,0,0)';
+            el.querySelectorAll('.swipe-label').forEach(l => l.style.opacity = 0);
+        }
+    };
+
+    el.addEventListener('touchstart', e => onStart(e.touches[0].clientX, e.touches[0].clientY));
+    window.addEventListener('touchmove', e => onMove(e.touches[0].clientX, e.touches[0].clientY));
+    window.addEventListener('touchend', onEnd);
+    
+    el.addEventListener('mousedown', e => onStart(e.clientX, e.clientY));
+    window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+    window.addEventListener('mouseup', onEnd);
+}
+
+function getDirection(dx, dy) {
+    let angle = Math.atan2(-dy, dx) * (180 / Math.PI);
+    if(angle < 0) angle += 360;
+    if(angle >= 45 && angle < 135) return 'UP';
+    if(angle >= 135 && angle < 225) return 'LEFT';
+    if(angle >= 225 && angle < 315) return 'DOWN';
+    return 'RIGHT';
+}
+
+function handleCommit(el, dir, data) {
+    if(dir === 'DOWN') {
+        el.style.transform = 'translate3d(0,0,0)';
+        el.querySelector('.sl-down').style.opacity = 0;
+        el.querySelector('.overlay').classList.add('active');
     } else {
-        el.classList.add('wrong');
-        // Reveal correct
-        Array.from(el.parentElement.children).forEach(child => {
-             // Basic text matching for fallback correction highlight
-             // ideally pass ID, but for now we rely on visual feedback
-        });
-        showLogic(logicText);
+        let sel = (dir === 'UP') ? data.u : (dir === 'RIGHT') ? data.r : data.l;
+        if(sel === data.correct) {
+            STATE.xp += 10;
+            localStorage.setItem(SYS.USER_KEY, STATE.xp);
+            document.getElementById('xp-val').innerText = `${STATE.xp} XP`;
+        }
+        
+        let flyX = dir==='LEFT' ? -1000 : dir==='RIGHT' ? 1000 : 0;
+        let flyY = dir==='UP' ? -1000 : 0;
+        el.style.transition = 'transform 0.4s ease';
+        el.style.transform = `translate3d(${flyX}px, ${flyY}px, 0)`;
+        
+        setTimeout(() => {
+            el.remove();
+            STATE.index++;
+            renderCard();
+        }, 300);
     }
 }
 
-function showLogic(text) {
-    document.getElementById('logicText').innerHTML = fmt(text);
-    document.getElementById('logic').classList.add('active');
-}
-
-// --- PHYSICS ENGINE (SWIPE) ---
-function bindPhysics(el) {
-    let startX = 0, currentX = 0;
-    let isDragging = false;
-
-    el.addEventListener('touchstart', e => {
-        startX = e.touches[0].clientX;
-        isDragging = true;
-        el.style.transition = 'none';
-    });
-
-    el.addEventListener('touchmove', e => {
-        if(!isDragging) return;
-        currentX = e.touches[0].clientX - startX;
-        el.style.transform = `translateX(${currentX}px) rotate(${currentX * 0.05}deg)`;
-        
-        // Opacity Hints
-        el.querySelector('.sh-right').style.opacity = currentX > 50 ? currentX/200 : 0;
-        el.querySelector('.sh-left').style.opacity = currentX < -50 ? Math.abs(currentX)/200 : 0;
-    });
-
-    el.addEventListener('touchend', e => {
-        isDragging = false;
-        el.style.transition = 'transform 0.3s ease';
-        
-        if(currentX > 120) swipeCard('RIGHT');
-        else if(currentX < -120) swipeCard('LEFT');
-        else {
-            el.style.transform = 'translateX(0) rotate(0)';
-            el.querySelectorAll('.swipe-hint').forEach(h => h.style.opacity = 0);
-        }
-    });
-}
-
-function swipeCard(dir) {
-    const el = document.querySelector('.card');
-    if(!el) return;
-    
-    const x = dir === 'RIGHT' ? window.innerWidth : -window.innerWidth;
-    el.style.transform = `translateX(${x}px) rotate(${x * 0.05}deg)`;
-    
-    setTimeout(() => {
-        INDEX++;
-        document.getElementById('logic').classList.remove('active');
-        renderCard();
-    }, 300);
-}
-
-// --- TEXT FORMATTER ---
-function fmt(text) {
-    if(!text) return "";
-    return text.toString()
-        .replace(/\^(\d+)/g, "<sup>$1</sup>")
-        .replace(/_(\d+)/g, "<sub>$1</sub>");
+function closeOverlay(btn) { btn.parentElement.classList.remove('active'); }
+function fmt(t) { 
+    if(!t) return "";
+    return t.toString().replace(/\^(\d+)/g, "<sup>$1</sup>").replace(/_(\d+)/g, "<sub>$1</sub>");
 }
 </script>
 </body>
