@@ -1,266 +1,536 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>VIA.STACK | DEEP DARK ENGINE</title>
+<title>Alchemist | Kinetic v147.6 FIXED</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,600;1,600&family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-/* --- YOUR CORE CSS (UNCHANGED) --- */
-:root {
-    /* Deep Dark Palette */
-    --bg: #000000;
-    --card-bg: #111111;
-    --overlay-bg: #0d0d0d;
-    --border: #222222;
-    
-    /* Accents */
-    --gold: #ffd600;
-    --blue: #3498db;
-    --green: #00e676; 
-    --red: #ff4757;
-    --text: #ffffff;
-    --muted: #555555;
+/* KINETIC VISUAL CORE */
+:root{ --bg:#000000; --card:#0a0a0a; --border:#222; --gold:#ffd600; --green:#2ecc71; --red:#ff4444; --text-white:#ffffff; --text-grey:#888888; --font-serif:'Crimson Text',serif; --font-sans:'Inter',sans-serif; --font-code:'JetBrains Mono',monospace; }
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+body{margin:0; height:100vh; background:var(--bg); color:var(--text-white); font-family:var(--font-sans); overflow:hidden; display:flex; flex-direction:column;}
 
-    /* Typography */
-    --font-chem: 'Crimson Text', serif;
-    --font-ui: 'Inter', sans-serif;
-    --font-code: 'JetBrains Mono', monospace;
+/* HEADER & LOGS */
+#header{width:90%; margin:25px auto 0; z-index:100; flex-shrink:0;}
+.header-meta{display:flex; justify-content:space-between; font-family:var(--font-code); font-size:0.75rem; color:#666; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:15px;}
+.progress-track{width:100%; height:3px; background:#222; border-radius:2px;}
+#progress-bar{height:100%; background:var(--gold); width:0%; transition:width 0.4s ease; border-radius:2px;}
+
+#kinetic-logger{width:90%; margin:15px auto 5px; font-family:var(--font-code); font-size:0.8rem; color:#444; line-height:1.4; text-transform:uppercase; min-height:60px; display:flex; flex-direction:column; justify-content:flex-end;}
+.log-line{opacity:0.5; transition:opacity 0.2s;} 
+.log-line.active{color:var(--green); opacity:1; font-weight:700;} 
+.log-line.primary{color:var(--gold); opacity:1; font-weight:700;}
+.log-line.danger{color:var(--red); opacity:1; font-weight:700;}
+
+/* SENSOR STATUS PILL */
+#gyro-status { 
+    position: absolute; top: 20px; left: 50%; transform: translateX(-50%); 
+    font-family: var(--font-code); font-size: 0.6rem; color: #444; 
+    border: 1px solid #333; padding: 4px 8px; border-radius: 4px; 
+    opacity: 0; transition: opacity 0.5s; pointer-events: none;
+}
+#gyro-status.active { opacity: 1; color: var(--gold); border-color: var(--gold); }
+
+/* PHYSICS STACK */
+#stack{position:relative; width:90%; max-width:420px; height:calc(100vh - 220px - env(safe-area-inset-bottom)); margin:10px auto 20px; perspective:1500px; display:flex; align-items:center; justify-content:center;}
+.card{
+    position:absolute; width:100%; height:100%; background:var(--card); 
+    border-radius:14px; border:1px solid var(--border); padding:35px; 
+    display:flex; flex-direction:column; justify-content:center; align-items:center; 
+    box-shadow:0 20px 60px rgba(0,0,0,0.95); 
+    will-change: transform; 
+    transform-style:preserve-3d; overflow:hidden;
 }
 
-/* Global Reset */
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-body { margin: 0; height: 100vh; background: var(--bg); color: var(--text); font-family: var(--font-ui); overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none; position: fixed; width: 100%; }
+.card.locked { opacity: 0.2; transform: scale(0.96); transition: opacity 0.3s, transform 0.3s; filter: grayscale(100%); }
 
-/* Formatting */
-sub { font-size: 0.7em; vertical-align: sub; line-height: 0; }
-sup { font-size: 0.7em; vertical-align: super; line-height: 0; }
-
-/* HUD ARCHITECTURE */
-#header { width: 90%; margin: calc(25px + env(safe-area-inset-top)) auto 0; z-index: 100; position: relative; }
-.header-meta { display: flex; justify-content: space-between; font-family: var(--font-code); font-size: 0.7rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
-.progress-track { width: 100%; height: 2px; background: #1a1a1a; margin-top: 10px; border-radius: 1px; overflow: hidden; }
-#progress-bar { height: 100%; background: var(--gold); width: 0%; transition: width 0.4s ease; }
-
-/* THE SINGULARITY STACK */
-#stack { position: relative; width: 92%; max-width: 400px; height: 72vh; margin: 30px auto 0; perspective: 1200px; }
-.card { 
-    position: absolute; width: 100%; height: 100%; background: var(--card-bg); border-radius: 40px; border: 1px solid var(--border);
-    padding: 45px; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 30px 90px rgba(0,0,0,0.9);
-    will-change: transform; cursor: grab; transform-origin: 50% 100%;
+.card-q{
+    font-family:var(--font-serif); font-size:clamp(1.4rem, 5vw, 1.9rem); line-height:1.4; font-weight:600; 
+    text-align:center; color:var(--text-white); width:100%; max-height:100%; overflow-y:auto; 
+    word-wrap:break-word; padding:0 5px; display:flex; flex-direction:column; justify-content:center;
+    transition: transform 0.1s ease-out; 
 }
-.card-meta { position: absolute; top: 30px; width: 100%; text-align: center; left: 0; font-family: var(--font-code); font-size: 0.6rem; color: #333; }
-.card-q { font-family: var(--font-chem); font-size: 1.9rem; line-height: 1.4; font-style: italic; font-weight: 600; text-align: center; color: #f0f0f0; overflow-wrap: break-word; }
+.card-q::-webkit-scrollbar{width:0px;} 
+.card-q sub{font-size:0.7em; vertical-align:-0.3em;} .card-q sup{font-size:0.7em; vertical-align:0.5em;}
 
-/* VECTOR HUD LABELS */
-.swipe-label {
-    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    background: #000; color: #fff; font-weight: 900; font-size: 2rem; text-transform: uppercase;
-    border-radius: 40px; z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.1s;
-    text-align: center; padding: 20px;
+/* SWIPE LABELS */
+.swipe-label{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; 
+    background:rgba(0,0,0,0.85); font-family:var(--font-sans); font-weight:900; 
+    font-size:1.6rem; text-transform:uppercase; letter-spacing:1px; text-align:center; 
+    padding:40px; opacity:0; pointer-events:none; transition:opacity 0.1s ease, transform 0.1s ease; 
+    border-radius:14px; color:var(--text-white); border:1px solid #444;
+    transform: scale(0.9);
 }
-.sl-up { border: 2px solid var(--gold); color: var(--gold); align-items: flex-start; padding-top: 60px; }
-.sl-right { border: 2px solid var(--green); color: var(--green); justify-content: flex-end; padding-right: 40px; }
-.sl-left { border: 2px solid var(--red); color: var(--red); justify-content: flex-start; padding-left: 40px; }
-.sl-down { border: 2px solid var(--blue); color: var(--blue); align-items: flex-end; padding-bottom: 60px; font-family: var(--font-chem); font-style: italic; font-size: 1.2rem; }
-
-/* LOGIC ANALYSIS OVERLAY */
-.overlay {
-    position: absolute; inset: 0; background: var(--overlay-bg); z-index: 1100; padding: 40px;
-    opacity: 0; pointer-events: none; border-radius: 40px; transition: opacity 0.3s ease;
-    display: flex; flex-direction: column; justify-content: center;
-}
-.overlay.active { opacity: 1; pointer-events: auto; }
-.overlay-label { font-size: 0.7rem; color: var(--gold); font-family: var(--font-code); margin-bottom: 10px; letter-spacing: 2px; }
-.overlay-body { font-size: 1.2rem; line-height: 1.6; color: #bbb; margin-bottom: 30px; font-family: var(--font-chem); overflow-y: auto; max-height: 60%; }
-.btn { width: 100%; padding: 20px; border-radius: 50px; border: none; background: #fff; color: #000; font-weight: 900; text-transform: uppercase; font-family: var(--font-ui); cursor: pointer; }
-
-/* RESPONSIVE SCALING */
-@media (max-height: 740px) {
-    #stack { margin: 20px auto 0; height: 75vh; }
-    .card { padding: 30px 25px; }
-    .card-q { font-size: 1.5rem; line-height: 1.3; }
-}
-
-/* ZERO STATE */
-#zero-state { position: absolute; inset: 0; background: #000; z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; }
 </style>
 </head>
-
 <body>
 
+<div id="gyro-status">HYBRID SENSORS READY</div>
+
 <div id="header">
-    <div class="header-meta">
-        <span id="sess-id">LOADING...</span>
-        <span id="xp-val">0 XP</span>
-    </div>
-    <div class="progress-track"><div id="progress-bar"></div></div>
+  <div class="header-meta">
+    <span id="id-ui">VIA.STACK</span> 
+    <span id="xp-ui">0 XP</span>
+  </div>
+  <div class="progress-track"><div id="progress-bar"></div></div>
 </div>
 
-<div id="stack"></div>
+<div id="kinetic-logger">
+  <div class="log-line" id="log-1">> SYSTEM BOOT</div>
+  <div class="log-line" id="log-2">> INJECTING DATA...</div>
+  <div class="log-line active" id="log-3">> ...</div>
+</div>
 
-<div id="zero-state">
-    <h2 style="color:#333; font-family:var(--font-ui);">NO DATA STREAM</h2>
-    <button class="btn" style="width:auto; padding:15px 40px; margin-top:20px; background:var(--gold);" onclick="location.href='admin.html'">CONNECT TO ADMIN</button>
+<div id="stack">
+  <div class="card">
+    <div class="card-q" style="font-family:var(--font-code); font-size:0.9rem; color:#666; font-style:normal;">LOADING STATIC CORE...</div>
+  </div>
 </div>
 
 <script>
-/* -----------------------------------------------------------
-   ALCHEMIST V136 | DEEP DARK BACKEND
-   ----------------------------------------------------------- */
+/* =========================================
+   VIA.STACK | KINETIC v147.6 STATIC (FIXED)
+   ========================================= */
 
-const SYS = {
-    DB_KEY: 'ALCHEMIST_MASTER_DB',
-    USER_KEY: 'ALCHEMIST_XP_V1',
-    PHYSICS: { THRESHOLD: 80, ROT_FACTOR: 25 }
-};
+// --- CONFIGURATION ---
+const BEACON_URL = "https://script.google.com/macros/s/AKfycbzpjvS1NODyITSe3O7F5Y6y4rTSVBfyK5A9aTj4DMa-CWFwTv7nX38bjjzoUy55JScf/exec"; 
+const WA_NUMBER = "916351537770"; 
 
-let STATE = {
-    pool: [],
-    index: 0,
-    xp: parseInt(localStorage.getItem(SYS.USER_KEY) || '0')
-};
+// --- SPHERICAL PHYSICS CONFIG ---
+const BALL_WEIGHT = 0.08;
+const SPHERE_RADIUS_PX = 1000; 
+const CLICK_ANGLE_DEG = 15; 
+const UNLOCK_ANGLE_DEG = 2.0;
 
-// --- BOOT ---
-window.onload = () => {
-    document.getElementById('xp-val').innerText = `${STATE.xp} XP`;
-    const raw = localStorage.getItem(SYS.DB_KEY);
-    
-    if(!raw) return document.getElementById('zero-state').style.display = 'flex';
-    
-    try {
-        STATE.pool = JSON.parse(raw);
-        if(!Array.isArray(STATE.pool) || STATE.pool.length === 0) throw "EMPTY";
-        STATE.pool.sort(() => Math.random() - 0.5);
-        renderCard();
-    } catch(e) {
-        document.getElementById('zero-state').style.display = 'flex';
+let SENSORS_ENABLED = false;
+
+// --- ✅ STATIC DATA INJECTION ---
+// PASTE YOUR DATA HERE
+const INJECTED_DATA = 
+[
+  // ... Paste your JSON data here ...
+]
+
+// --- STATE ---
+let RAW_DATA = [], POOL = [], WRONG = [], SESSION_ALL = [];
+let SET_CURSOR = 0, ACTIVE_SET = null, XP = 0, VOLUME_LIMIT = null;
+let ATTEMPTED = new Set(); 
+
+// --- TELEMETRY ---
+let Q_START_TIME = 0;
+let SESSION_LOG = []; 
+
+// --- BACKEND ---
+let USER_MOBILE = localStorage.getItem("USER_MOBILE") || null;
+let CURRENT_SES_ID = null;
+let CREDITS = parseInt(localStorage.getItem("USER_CREDITS") || "10");
+let VAULT = [];
+try { VAULT = JSON.parse(localStorage.getItem("USER_VAULT") || "[]"); } catch(e) { VAULT = []; }
+
+/* ================= UTILS ================= */
+function log(msg, type="normal") {
+    const l1 = document.getElementById("log-1"), l2 = document.getElementById("log-2"), l3 = document.getElementById("log-3");
+    l1.innerText = l2.innerText; l1.className = l2.className;
+    l2.innerText = l3.innerText; l2.className = "log-line"; 
+    l3.innerText = `> ${msg}`;
+    l3.className = type === "active" ? "log-line active" : type === "primary" ? "log-line primary" : type === "danger" ? "log-line danger" : "log-line";
+}
+
+/* ================= HYBRID PHYSICS ENGINE ================= */
+const chemText = t => String(t||"").replace(/_(\d+)/g,"<sub>$1</sub>").replace(/\^([0-9+\-]+)/g,"<sup>$1</sup>").replace(/<->|↔/g,"⇌");
+
+class PhysicsController {
+ constructor(el, cbs, sensorsActive = true) {
+  this.el = el; this.cbs = cbs; 
+  this.qEl = el.querySelector(".card-q"); 
+  this.active = false; 
+  this.locked = false; 
+  this.awaitingRecenter = true; 
+  
+  this.current = {x:0, y:0}; 
+  this.target = {x:0, y:0};  
+  
+  this.labels = {UP:el.querySelector(".sl-up"), LEFT:el.querySelector(".sl-left"), RIGHT:el.querySelector(".sl-right"), DOWN:el.querySelector(".sl-down")};
+  
+  this.el.classList.add('locked');
+  
+  const s = e => this.startDrag(e.touches?e.touches[0]:e); 
+  const m = e => this.move(e.touches?e.touches[0]:e); 
+  const e2 = () => this.end();
+  el.addEventListener("mousedown",s); window.addEventListener("mousemove",m); window.addEventListener("mouseup",e2);
+  el.addEventListener("touchstart",s,{passive:false}); el.addEventListener("touchmove",ev=>{if(this.active)ev.preventDefault();m(ev)},{passive:false}); el.addEventListener("touchend",e2);
+
+  if(SENSORS_ENABLED && sensorsActive) {
+      this.handleMouseTether = this.handleMouseTether.bind(this);
+      this.handleMouseCommit = this.handleMouseCommit.bind(this);
+      window.addEventListener("mousemove", this.handleMouseTether);
+      window.addEventListener("mousedown", this.handleMouseCommit);
+      
+      this.handleOrientation = this.handleOrientation.bind(this);
+      if(window.DeviceOrientationEvent) window.addEventListener("deviceorientation", this.handleOrientation);
+      
+      this.loop = this.loop.bind(this);
+      this.raf = requestAnimationFrame(this.loop);
+  } else {
+      this.unlockCard();
+  }
+ }
+
+ unlockCard() {
+     if(!this.awaitingRecenter) return;
+     this.awaitingRecenter = false;
+     this.el.classList.remove('locked');
+ }
+
+ cleanup() {
+     cancelAnimationFrame(this.raf);
+     window.removeEventListener("mousemove", this.handleMouseTether);
+     window.removeEventListener("mousedown", this.handleMouseCommit);
+     window.removeEventListener("deviceorientation", this.handleOrientation);
+ }
+
+ loop() {
+     if(this.active || this.locked) return; 
+
+     this.current.x += (this.target.x - this.current.x) * BALL_WEIGHT;
+     this.current.y += (this.target.y - this.current.y) * BALL_WEIGHT;
+
+     if(this.awaitingRecenter && SENSORS_ENABLED) {
+         const tiltMag = Math.hypot(this.target.x, this.target.y);
+         const unlockThresh = SPHERE_RADIUS_PX * Math.tan(UNLOCK_ANGLE_DEG * Math.PI / 180);
+         if(tiltMag < unlockThresh) this.unlockCard();
+     }
+
+     if(!this.awaitingRecenter) {
+         this.updateVisuals(this.current.x, this.current.y);
+         if(SENSORS_ENABLED) {
+             const clickThresh = SPHERE_RADIUS_PX * Math.tan(CLICK_ANGLE_DEG * Math.PI / 180);
+             if(Math.abs(this.current.x) > clickThresh) this.commitWithAnimation(Math.sign(this.current.x)*100, 0);
+             else if(Math.abs(this.current.y) > clickThresh) this.commitWithAnimation(0, Math.sign(this.current.y)*100);
+         }
+     }
+     this.raf = requestAnimationFrame(this.loop);
+ }
+
+ handleMouseTether(e) {
+     if(this.active || this.locked) return; 
+     const cx = window.innerWidth / 2;
+     const cy = window.innerHeight / 2;
+     this.target.x = (e.clientX - cx) * 0.8;
+     this.target.y = (e.clientY - cy) * 0.8;
+ }
+
+ handleMouseCommit(e) {
+     if(this.active || this.locked || this.awaitingRecenter) return;
+     if(Math.abs(this.target.x) > 80 || Math.abs(this.target.y) > 80) this.commitWithAnimation(this.target.x, this.target.y);
+ }
+
+ handleOrientation(event) {
+     if(this.active || this.locked) return;
+     let g = event.gamma; let b = event.beta - 45; 
+     let radX = (g * Math.PI) / 180; let radY = (b * Math.PI) / 180;
+     const MAX_RAD = 20 * Math.PI / 180;
+     radX = Math.max(-MAX_RAD, Math.min(MAX_RAD, radX));
+     radY = Math.max(-MAX_RAD, Math.min(MAX_RAD, radY));
+     if(Math.abs(g) > 0.5) this.target.x = SPHERE_RADIUS_PX * Math.tan(radX); else this.target.x = 0;
+     if(Math.abs(b) > 0.5) this.target.y = SPHERE_RADIUS_PX * Math.tan(radY); else this.target.y = 0;
+ }
+
+ commitWithAnimation(dx, dy) {
+     this.locked = true;
+     this.cleanup(); 
+     const flyX = dx * 6; const flyY = dy * 6;
+     this.el.style.transition = "0.4s cubic-bezier(0.2, 0.8, 0.2, 1)";
+     this.el.style.transform = `translate(${flyX}px, ${flyY}px) rotate(${flyX/15}deg)`;
+     this.el.style.opacity = "0";
+     setTimeout(() => { this.cbs.onCommit(this.dir(dx, dy)); }, 300);
+ }
+
+ startDrag(p){ 
+     this.active=true; this.unlockCard(); this.start={x:p.clientX, y:p.clientY}; this.el.style.transition="none"; 
+ }
+ move(p){ 
+     if(!this.active) return;
+     this.updateVisuals(p.clientX - this.start.x, p.clientY - this.start.y);
+ }
+ end(){
+     if(!this.active) return; this.active=false;
+     const m = new WebKitCSSMatrix(getComputedStyle(this.el).transform);
+     if(Math.hypot(m.m41, m.m42) > 100) this.cbs.onCommit(this.dir(m.m41, m.m42));
+     else { this.el.style.transition="0.3s cubic-bezier(0.2,0.8,0.2,1)"; this.el.style.transform="translate(0,0)"; }
+ }
+
+ updateVisuals(dx, dy) {
+     this.el.style.transform = `translate(${dx}px, ${dy}px) rotate(${dx/25}deg)`;
+     if(this.qEl) this.qEl.style.transform = `translate(${-dx/8}px, ${-dy/8}px)`;
+     const d = Math.hypot(dx, dy);
+     Object.values(this.labels).forEach(l => l && (l.style.opacity = 0));
+     if(d > 30) {
+         const dir = this.dir(dx, dy);
+         if(this.labels[dir]) {
+             const opacity = Math.min((d-30)/140, 1);
+             this.labels[dir].style.opacity = opacity;
+             this.labels[dir].style.transform = `scale(${0.9 + (opacity * 0.1)})`;
+         }
+     }
+ }
+
+ dir(dx, dy){
+     const a = (Math.atan2(-dy, dx) * 180 / Math.PI + 360) % 360;
+     if(a>45 && a<135) return "UP"; if(a>135 && a<225) return "LEFT"; if(a>225 && a<315) return "DOWN"; return "RIGHT";
+ }
+}
+
+const UI = {stack:document.getElementById("stack"), id:document.getElementById("id-ui"), xp:document.getElementById("xp-ui"), bar:document.getElementById("progress-bar"), gyro:document.getElementById("gyro-status")};
+
+function card(text, labels, cb, allowSensors = true) {
+ UI.stack.innerHTML=""; const el=document.createElement("div"); el.className="card";
+ el.innerHTML=`<div class="card-q">${chemText(text).replace(/\n/g,"<br>")}</div>
+  <div class="swipe-label sl-up">${chemText(labels.up)||""}</div><div class="swipe-label sl-left">${chemText(labels.left)||""}</div><div class="swipe-label sl-right">${chemText(labels.right)||""}</div><div class="swipe-label sl-down">${chemText(labels.down)||""}</div>`;
+ UI.stack.appendChild(el); 
+ Q_START_TIME = Date.now();
+ new PhysicsController(el, {onCommit:cb}, allowSensors);
+}
+
+function begin(){
+ const tiltLabel = SENSORS_ENABLED ? "SENSORS ACTIVE" : "ENABLE TILT";
+ card(`DATA LOADED\n${RAW_DATA.length} UNITS`,{up:"START QUIZ", down:tiltLabel, left:"VAULT", right:"RELOAD"}, dir=>{
+  if(dir==="UP") setPick(); 
+  if(dir==="DOWN") requestSensorAccess(); 
+  if(dir==="LEFT") checkLoginForVault();
+  if(dir==="RIGHT") location.reload();
+ });
+}
+
+function requestSensorAccess() {
+    SENSORS_ENABLED = true;
+    UI.gyro.classList.add('active');
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission().then(state => {
+            if (state === 'granted') log("GYRO ENABLED", "active");
+            else log("GYRO DENIED (MOUSE ONLY)", "danger");
+        }).catch(() => log("MOUSE MODE ONLY", "normal"));
+    } else log("HYBRID SENSORS ON", "active");
+    begin();
+}
+
+function checkLoginForVault(){
+    if(USER_MOBILE && USER_MOBILE.length > 5){ openVault(0); return; }
+    const mob = prompt("SECURE VAULT ACCESS\n\nEnter your Registered Mobile Number to unlock:");
+    if(mob && mob.length >= 10){
+        localStorage.setItem("USER_MOBILE", mob); USER_MOBILE = mob;
+        log(`LOGIN SUCCESS: ${mob}`, "active"); openVault(0);
+    } else { log("ACCESS DENIED", "danger"); begin(); }
+}
+
+function openVault(index){
+    if(VAULT.length === 0){ 
+        card("LOCAL ARCHIVE EMPTY", {up:"MENU"}, dir => begin());
+        return; 
     }
-};
+    if(index < 0) { begin(); return; } 
+    if(index >= VAULT.length) index = VAULT.length - 1;
+    const item = VAULT[index];
+    log(`ARCHIVE: ${item.id}`, "primary");
+    card(`VAULT // ${item.id}\n\nSCORE: ${item.score}/${item.total}\n${item.date}`,
+        { up: "OPEN PDF", left: "PREV", right: "NEXT" }, 
+        dir => {
+            if(dir === "LEFT") openVault(index - 1);
+            if(dir === "RIGHT") openVault(index + 1);
+            if(dir === "UP") renderSessionPDF(item.data, item.id);
+        }, false 
+    );
+}
 
-// --- RENDERER ---
-function renderCard() {
-    const stack = document.getElementById('stack');
-    stack.innerHTML = ''; 
+function setPick(){
+ const sets=[...new Set(RAW_DATA.map(d=>d.set))];
+ if(sets.length===0){card("NO DATA FOUND",{down:"RETRY"},()=>location.reload());return;}
+ card(sets[SET_CURSOR],{left:"",right:"",up:"SELECT",down:"BACK"},dir=>{
+  if(dir==="LEFT"){SET_CURSOR=(SET_CURSOR-1+sets.length)%sets.length;setPick();}
+  if(dir==="RIGHT"){SET_CURSOR=(SET_CURSOR+1)%sets.length;setPick();}
+  if(dir==="UP"){ACTIVE_SET=sets[SET_CURSOR];volumePick();}
+  if(dir==="DOWN")begin();
+ });
+}
 
-    // Progress Bar
-    const prog = Math.min(((STATE.index) / STATE.pool.length) * 100, 100);
-    document.getElementById('progress-bar').style.width = `${prog}%`;
+function volumePick(){
+ card(`QUESTION VOLUME`,{up:"10 Q",left:"25 Q",right:"50 Q",down:"ALL"},dir=>{
+    if(dir==="UP")VOLUME_LIMIT=10; if(dir==="LEFT")VOLUME_LIMIT=25; if(dir==="RIGHT")VOLUME_LIMIT=50; if(dir==="DOWN")VOLUME_LIMIT=null;
+    startQuiz();
+ });
+}
 
-    if(STATE.index >= STATE.pool.length) {
-        stack.innerHTML = `<div class="card" style="align-items:center; text-align:center;">
-            <div class="card-q">Session Complete</div>
-            <button class="btn" style="margin-top:30px; background:var(--gold);" onclick="location.reload()">REBOOT</button>
-        </div>`;
+function startQuiz(){
+ log("INITIATING QUIZ...", "active");
+ let base = RAW_DATA.filter(d=>d.set===ACTIVE_SET);
+ base = shuffle(base); 
+ if(VOLUME_LIMIT && VOLUME_LIMIT < base.length) base = base.slice(0, VOLUME_LIMIT);
+ POOL=base; WRONG=[]; SESSION_ALL=[]; XP=0; ATTEMPTED=new Set();
+ CURRENT_SES_ID = null; 
+ SESSION_LOG = []; 
+ nextQ();
+}
+
+function nextQ(){
+ if(!CURRENT_SES_ID && SESSION_ALL.length > 0 && POOL.length <= SESSION_ALL.length){ generateSessionID(); }
+ if(!POOL.length){ if(WRONG.length){ review(); return; } report(); return; }
+ const d=POOL.shift();
+ log(`ID: ${d.id}`, "normal");
+ if(!SESSION_ALL.includes(d)) SESSION_ALL.push(d); 
+ const opts = shuffle([d.u, d.l, d.r]);
+ const map = { up: opts[0], left: opts[1], right: opts[2] };
+ card(d.q, map, dir=>{
+  let picked = null;
+  if(dir==="UP") picked = map.up; if(dir==="LEFT") picked = map.left; if(dir==="RIGHT") picked = map.right;
+  let cText = d.u; // We hardcoded Correct Answer to 'u' in the map logic below, and d.correct to 'UP'
+  // But wait, the display options are shuffled in 'map' (up/left/right).
+  // 'picked' holds the TEXT of the option chosen.
+  // 'd.u' holds the TEXT of the correct answer (from the mapping).
+  const isCorrect = String(picked).trim().toLowerCase() === String(cText).trim().toLowerCase();
+  
+  const latency = Date.now() - Q_START_TIME;
+  SESSION_LOG.push({ id: d.id, res: isCorrect ? "WIN" : "LOSS", latency: latency });
+
+  if(!isCorrect){ WRONG.push(d); } else { if(!ATTEMPTED.has(d.id)){ XP+=1; } }
+  ATTEMPTED.add(d.id);
+  UI.xp.textContent=`${XP} / ${SESSION_ALL.length}`;
+  UI.bar.style.width = ((SESSION_ALL.length - POOL.length) / SESSION_ALL.length) * 100 + "%";
+  nextQ();
+ });
+}
+
+function review(){
+ if(!WRONG.length){ report(); return; } 
+ const d=WRONG[0]; 
+ log("REVIEW MODE", "primary");
+ card(`REVIEW NOTE\n\n${d.logic || "Review the core principles."}`,{up:"RETRY", down:"SKIP"},dir=>{
+    if(dir==="UP"){ WRONG.shift(); POOL.unshift(d); } else { WRONG.shift(); }
+    nextQ();
+ });
+}
+
+function report(){
+ if(!CURRENT_SES_ID) generateSessionID();
+ const percent = Math.round((XP / SESSION_ALL.length) * 100) || 0;
+ card(`SUMMARY\n\n${XP} / ${SESSION_ALL.length} Correct\n(${percent}%)`,{down:"DOWNLOAD PDF", up:"RESTART", left:"MENU"},dir=>{
+    if(dir==="DOWN") handleDownloadRequest();
+    if(dir==="UP") startQuiz(); 
+    if(dir==="LEFT") begin();
+ }, false);
+}
+
+function handleDownloadRequest(){
+    if(!USER_MOBILE){
+        const text = `REGISTERING ACCOUNT.\nLINK MY ID: ${CURRENT_SES_ID}`;
+        const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`;
+        card(`ACCOUNT REQUIRED\n\nTo save this PDF, you must link your device.\n\nID: ${CURRENT_SES_ID}`,
+            { up: "LINK VIA WHATSAPP", down: "I HAVE LINKED" },
+            (dir) => {
+                if(dir === "UP") { window.open(url, '_blank'); }
+                if(dir === "DOWN") {
+                    const mob = prompt("ENTER REGISTERED MOBILE:");
+                    if(mob && mob.length >= 10) {
+                        localStorage.setItem("USER_MOBILE", mob); USER_MOBILE = mob;
+                        log("IDENTITY LINKED", "active"); report();
+                    } else { log("INVALID INPUT", "normal"); handleDownloadRequest(); }
+                }
+            }, false
+        );
         return;
     }
-
-    const data = STATE.pool[STATE.index];
-    document.getElementById('sess-id').innerText = data.id || `IDX_${STATE.index}`;
-
-    const el = document.createElement('div');
-    el.className = 'card';
-    el.innerHTML = `
-        <div class="card-meta">${data.dom || 'GENERAL'} // LVL ${data.level || '1'}</div>
-        <div class="card-q">${fmt(data.q)}</div>
-        
-        <div class="swipe-label sl-up">${fmt(data.u)}</div>
-        <div class="swipe-label sl-right">${fmt(data.r)}</div>
-        <div class="swipe-label sl-left">${fmt(data.l)}</div>
-        <div class="swipe-label sl-down">DEEP DIVE</div>
-        
-        <div class="overlay">
-            <div class="overlay-label">THEORETICAL LOGIC</div>
-            <div class="overlay-body">${fmt(data.logic || data.expl || "No analysis available.")}</div>
-            <button class="btn" onclick="closeOverlay(this)">RESUME SESSION</button>
-        </div>
-    `;
-
-    stack.appendChild(el);
-    bindPhysics(el, data);
+    exportSessionPDF();
 }
 
-// --- PHYSICS ENGINE ---
-function bindPhysics(el, data) {
-    let startX=0, startY=0, dx=0, dy=0, active=false;
+function exportSessionPDF(data=null, id=null){
+ const renderData = data || SESSION_ALL;
+ const renderID = id || CURRENT_SES_ID;
+ 
+ if(!data){ 
+    if(CREDITS < 1) { log("INSUFFICIENT CREDITS", "danger"); return; }
+    CREDITS--;
+    localStorage.setItem("USER_CREDITS", CREDITS);
+    VAULT.unshift({ id: renderID, date: new Date().toLocaleDateString(), score: XP, total: SESSION_ALL.length, data: [...SESSION_ALL] });
+    localStorage.setItem("USER_VAULT", JSON.stringify(VAULT));
+ }
+
+ log("GENERATING PDF...", "active");
+ const {jsPDF}=window.jspdf; const doc=new jsPDF();
+ const unique=renderData.filter((q,i,self)=>i===self.findIndex(t=>(t.id===q.id)));
+ let y=20; const ML=15; const W=180;
+
+ doc.setFont("times","bold"); doc.setFontSize(16);
+ doc.text(`VIA.STACK // ${renderID}`,105,y,{align:"center"});
+ doc.setFontSize(10); doc.text(`USER: ${USER_MOBILE || "GUEST"}`, 105, y+5, {align:"center"});
+ doc.line(ML,y+8,195,y+8); y+=15;
+
+ unique.forEach((d,i)=>{
+  if(y>240){doc.addPage();y=20;}
+  doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(100);
+  doc.text(`${d.id} // ${d.dom||"GEN"}`,ML,y); y+=5;
+  doc.setFont("times","bold"); doc.setFontSize(12); doc.setTextColor(0);
+  const qLines = doc.splitTextToSize(cleanPDF(d.q),W); doc.text(qLines,ML,y); y+=(qLines.length*5)+3;
+  
+  doc.setFont("helvetica","bold"); doc.setFontSize(7); doc.setTextColor(150); doc.text("ANSWER & LOGIC",ML,y); y+=4;
+  doc.setFont("times","normal"); doc.setFontSize(10); doc.setTextColor(0);
+  doc.text(`CORRECT: ${cleanPDF(d.u)}`, ML, y); y+=5; // d.u holds correct answer
+  const logT=doc.splitTextToSize(`LOGIC: ${cleanPDF(d.logic||"-")}`,W); doc.text(logT,ML,y); y+=(logT.length*5)+5;
+  
+  doc.setDrawColor(200); doc.setLineWidth(0.1); doc.line(ML,y,195,y); y+=5;
+ });
+
+ doc.save(`ALCHEMIST_${renderID}.pdf`);
+ if(!data) sendTelemetry(); 
+ setTimeout(begin,500);
+}
+
+function sendTelemetry(sid) {
+    if(!BEACON_URL) return;
+    const totalLatency = SESSION_LOG.reduce((sum, item) => sum + item.latency, 0);
+    const avgLatency = SESSION_LOG.length > 0 ? Math.round(totalLatency / SESSION_LOG.length) : 0;
+    const accuracy = SESSION_ALL.length > 0 ? Math.round((XP / SESSION_ALL.length) * 100) : 0;
     
-    const onStart = (x, y) => { active=true; startX=x; startY=y; el.style.transition='none'; };
-    const onMove = (x, y) => {
-        if(!active) return;
-        dx = x - startX; dy = y - startY;
-        el.style.transform = `translate3d(${dx}px, ${dy}px, 0) rotate(${dx/SYS.PHYSICS.ROT_FACTOR}deg)`;
-        
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        if(dist > 30) {
-            el.querySelectorAll('.swipe-label').forEach(l => l.style.opacity = 0);
-            const dir = getDirection(dx, dy);
-            const label = el.querySelector(`.sl-${dir.toLowerCase()}`);
-            if(label) label.style.opacity = Math.min(dist/100, 1);
-        }
-    };
-    const onEnd = () => {
-        if(!active) return; active = false;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        if(dist > SYS.PHYSICS.THRESHOLD) {
-            handleCommit(el, getDirection(dx, dy), data);
-        } else {
-            el.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            el.style.transform = 'translate3d(0,0,0)';
-            el.querySelectorAll('.swipe-label').forEach(l => l.style.opacity = 0);
-        }
-    };
-
-    el.addEventListener('touchstart', e => onStart(e.touches[0].clientX, e.touches[0].clientY));
-    window.addEventListener('touchmove', e => onMove(e.touches[0].clientX, e.touches[0].clientY));
-    window.addEventListener('touchend', onEnd);
-    
-    el.addEventListener('mousedown', e => onStart(e.clientX, e.clientY));
-    window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
-    window.addEventListener('mouseup', onEnd);
+    fetch(BEACON_URL, {
+        method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ses_id: CURRENT_SES_ID, mobile: USER_MOBILE || "GUEST", credits: CREDITS, score: XP, accuracy: accuracy, latency: avgLatency, log: SESSION_LOG })
+    }).catch(e => log("DATA SYNC FAILED", "danger"));
 }
 
-function getDirection(dx, dy) {
-    let angle = Math.atan2(-dy, dx) * (180 / Math.PI);
-    if(angle < 0) angle += 360;
-    if(angle >= 45 && angle < 135) return 'UP';
-    if(angle >= 135 && angle < 225) return 'LEFT';
-    if(angle >= 225 && angle < 315) return 'DOWN';
-    return 'RIGHT';
+function generateSessionID() {
+    const hash = Math.random().toString(36).substring(2, 7).toUpperCase();
+    CURRENT_SES_ID = `SES_${hash}`;
+    localStorage.setItem("LAST_SES_ID", CURRENT_SES_ID);
 }
 
-function handleCommit(el, dir, data) {
-    if(dir === 'DOWN') {
-        el.style.transform = 'translate3d(0,0,0)';
-        el.querySelector('.sl-down').style.opacity = 0;
-        el.querySelector('.overlay').classList.add('active');
-    } else {
-        let sel = (dir === 'UP') ? data.u : (dir === 'RIGHT') ? data.r : data.l;
-        if(sel === data.correct) {
-            STATE.xp += 10;
-            localStorage.setItem(SYS.USER_KEY, STATE.xp);
-            document.getElementById('xp-val').innerText = `${STATE.xp} XP`;
-        }
-        
-        let flyX = dir==='LEFT' ? -1000 : dir==='RIGHT' ? 1000 : 0;
-        let flyY = dir==='UP' ? -1000 : 0;
-        el.style.transition = 'transform 0.4s ease';
-        el.style.transform = `translate3d(${flyX}px, ${flyY}px, 0)`;
-        
-        setTimeout(() => {
-            el.remove();
-            STATE.index++;
-            renderCard();
-        }, 300);
-    }
-}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a;}
+const cleanPDF = t => String(t||"").replace(/<[^>]*>/g, "").replace(/&Delta;/g, "Δ");
 
-function closeOverlay(btn) { btn.parentElement.classList.remove('active'); }
-function fmt(t) { 
-    if(!t) return "";
-    return t.toString().replace(/\^(\d+)/g, "<sup>$1</sup>").replace(/_(\d+)/g, "<sub>$1</sub>");
+// ✅ FIXED MAPPING LOGIC
+async function init() {
+  log("SYSTEM BOOT", "active");
+  RAW_DATA = INJECTED_DATA.map(d => ({
+    id: d.Question_ID,
+    set: d.Set_Code || "DEFAULT",
+    dom: d.Domain || "GEN",
+    q: d.Question_Text,
+    u: d.Correct_Answer,      
+    l: d.Distractor_1,
+    r: d.Distractor_2,
+    correct: "UP",            
+    logic: d.Explanation_Short || d.Explanation_Long,
+    hint: d.Topic_Label,
+    trap: d.Trap_Explanation
+  })).filter(d => d.id); 
+
+  log(`STATIC DATA LOADED (${RAW_DATA.length})`, "active");
+  begin();
 }
+init();
 </script>
 </body>
 </html>
